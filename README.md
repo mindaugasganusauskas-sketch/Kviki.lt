@@ -104,6 +104,8 @@ npm run test:e2e      # naršyklėje: klientas telefone, kompiuteryje, du teikė
 
 Pakanka vieno VPS. Svetainė, duomenų bazė ir nuotraukos veikia tame pačiame serveryje per Docker, o HTTPS sertifikatą automatiškai gauna Caddy.
 
+**Kaip pakeitimai patenka į svetainę.** Serveris seka `main` šaką. Claude dirba savo darbo šakoje (`claude/…`) ir prieš publikuodamas pokalbyje parodo, kas pasikeitė. Tik savininkui patvirtinus pokalbyje, Claude perkelia pakeitimus į `main`, o serveris per 5 minutes atsinaujina pats. Be patvirtinimo niekas į `main` nepatenka.
+
 **Reikalavimai:** Ubuntu 22.04 arba 24.04, bent 2 GB RAM (Hostinger KVM 1 su 4 GB pakanka), atidaryti 22, 80 ir 443 prievadai.
 
 **Trumpai:** nukreipkite DNS (1 žingsnis), įdėkite „Deploy key“ ir parsisiųskite kodą (3 žingsnis), tada paleiskite `./scripts/install-vps.sh kviki.lt`. Skriptas įdiegia Docker, patikrina, ar laisvi 80 ir 443 prievadai, sukuria `.env` su atsitiktiniu slaptažodžiu, paleidžia svetainę ir patikrina DNS. Žemiau – tas pats, tik žingsnis po žingsnio.
@@ -121,7 +123,7 @@ Pakanka vieno VPS. Svetainė, duomenų bazė ir nuotraukos veikia tame pačiame 
    - paprasčiausia – GitHub „Deploy key“: serveryje `ssh-keygen -t ed25519`, o viešąjį raktą (`~/.ssh/id_ed25519.pub`) įdėkite saugykloje: Settings → Deploy keys;
    - tada:
    ```bash
-   git clone -b claude/website-creation-fumd3n git@github.com:mindaugasganusauskas-sketch/Kviki.lt.git /opt/kviki
+   git clone -b main git@github.com:mindaugasganusauskas-sketch/Kviki.lt.git /opt/kviki
    cd /opt/kviki
    ```
 
