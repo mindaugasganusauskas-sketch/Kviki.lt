@@ -95,7 +95,7 @@ export interface WizardProps {
   requestId?: string;
   initial?: WizardState;
   existingPhotos?: PhotoDTO[];
-  user: { name: string; phone: string | null } | null;
+  user: { name: string; phone: string | null; isDemo?: boolean } | null;
   startCategory?: CategoryId | null;
   startText?: string | null;
   hasOffers?: boolean;
@@ -479,6 +479,9 @@ export function RequestWizard(props: WizardProps) {
           </Field>
 
           <Field label="Nuotraukos" optional>
+            {props.user?.isDemo ? (
+              <p className="rounded-xl bg-paper p-3 text-sm text-muted">Demonstracijoje nuotraukų įkelti negalima.</p>
+            ) : (
             <PhotoPicker
               files={files}
               onFiles={setFiles}
@@ -486,6 +489,7 @@ export function RequestWizard(props: WizardProps) {
               removedIds={removedIds}
               onToggleExisting={(id) => setRemovedIds((r) => (r.includes(id) ? r.filter((x) => x !== id) : [...r, id]))}
             />
+            )}
           </Field>
         </section>
       )}

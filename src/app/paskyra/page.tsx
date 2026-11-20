@@ -7,7 +7,8 @@ import { businessFormLabel } from "@/shared/format";
 import { municipalityLabel } from "@/shared/municipalities";
 import { ModeSwitch } from "@/components/nav";
 import { ButtonLink, Card, DefinitionRow, PageHeader } from "@/components/ui";
-import { AccountForm, LogoutButton } from "./account-form";
+import Link from "next/link";
+import { AccountForm, DeleteAccount, LogoutButton } from "./account-form";
 
 export const metadata: Metadata = { title: "Paskyra" };
 
@@ -55,9 +56,27 @@ export default async function AccountPage() {
         )}
       </Card>
 
-      <div className="flex justify-end">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="flex gap-4 text-sm">
+          <Link href="/taisykles" className="font-semibold text-brand-700 hover:underline">
+            Taisyklės
+          </Link>
+          <Link href="/privatumas" className="font-semibold text-brand-700 hover:underline">
+            Privatumo politika
+          </Link>
+        </p>
         <LogoutButton />
       </div>
+
+      {!actor.isDemo && (
+        <Card className="border-red-200">
+          <h2 className="text-lg font-bold">Paskyros ištrynimas</h2>
+          <p className="mb-4 mt-1 text-sm text-muted">
+            Galite ištrinti paskyrą ir asmens duomenis. Jei turite aktyvių užsakymų, pirmiausia juos užbaikite arba atšaukite.
+          </p>
+          <DeleteAccount />
+        </Card>
+      )}
     </div>
   );
 }

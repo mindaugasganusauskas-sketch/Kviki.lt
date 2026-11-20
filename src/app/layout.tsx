@@ -51,6 +51,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <Link href="/kaip-tai-veikia" className="hover:text-ink">
                 Kaip tai veikia
               </Link>
+              <Link href="/taisykles" className="hover:text-ink">
+                Taisyklės
+              </Link>
               <Link href="/privatumas" className="hover:text-ink">
                 Privatumas
               </Link>

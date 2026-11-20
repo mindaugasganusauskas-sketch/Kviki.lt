@@ -20,7 +20,7 @@ export default async function EditRequestPage(props: PageProps<"/uzklausos/[id]/
     if (err instanceof AppError && err.code === "NOT_FOUND") notFound();
     throw err;
   }
-  if (view.viewer !== "owner" || view.status !== "open") redirect(`/uzklausos/${id}`);
+  if (view.viewer !== "owner" || (view.status !== "open" && view.status !== "expired")) redirect(`/uzklausos/${id}`);
   return (
     <div>
       <div className="mx-auto max-w-2xl">
@@ -31,7 +31,7 @@ export default async function EditRequestPage(props: PageProps<"/uzklausos/[id]/
         requestId={id}
         initial={fromRequest(view)}
         existingPhotos={view.photos}
-        user={{ name: actor.name, phone: actor.phone }}
+        user={{ name: actor.name, phone: actor.phone, isDemo: actor.isDemo }}
         hasOffers={view.offers.some((o) => o.status === "active")}
       />
     </div>

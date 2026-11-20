@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { and, count, desc, eq, inArray, ne, notInArray } from "drizzle-orm";
+import { and, count, desc, eq, gt, inArray, isNull, ne, notInArray, or } from "drizzle-orm";
 import { db, type Tx } from "@/server/db";
 import {
   agreements,
@@ -15,6 +15,7 @@ import {
 } from "@/server/db/schema";
 import type { Actor } from "@/server/auth/session";
 import { AppError, notFound, parseInput } from "@/server/errors";
+import { allow } from "@/server/auth/rate-limit";
 import { requestHeadline } from "@/shared/categories";
 import { municipalityLabel } from "@/shared/municipalities";
 import { requestInputSchema, type RequestParsed } from "@/shared/schemas";
@@ -103,7 +104,24 @@ async function notifyNearbyProviders(tx: Tx, r: RequestRow, excludeIds: string[]
 
 // --- Kūrimas ------------------------------------------------------------------
 
+/** Kiek naujų užklausų vienas naudotojas gali paskelbti per parą. */
+export const MAX_REQUESTS_PER_DAY = 10;
+
+function checkDemoPhotos(actor: Actor, photos: ProcessedPhoto[]) {
+  if (actor.isDemo && photos.length) {
+    throw new AppError("VALIDATION", "Demonstracijoje nuotraukų įkelti negalima");
+  }
+}
+
 export async function createRequest(actor: Actor, input: unknown, photos: ProcessedPhoto[] = []): Promise<{ id: string }> {
+  checkDemoPhotos(actor, photos);
+  const [{ n }] = await db
+    .select({ n: count() })
+    .from(jobRequests)
+    .where(and(eq(jobRequests.clientId, actor.id), gt(jobRequests.createdAt, new Date(Date.now() - 24 * 3600 * 1000))));
+  if (n >= MAX_REQUESTS_PER_DAY) {
+    throw new AppError("RATE_LIMITED", `Per parą galima paskelbti iki ${MAX_REQUESTS_PER_DAY} užklausų. Pabandykite rytoj.`);
+  }
   const data = parseInput(requestInputSchema, input);
   const cols = columnsFromInput(data);
   checkAgainstNow(cols);
@@ -268,6 +286,7 @@ export async function nearbyJobs(actor: Actor): Promise<NearbyJobDTO[]> {
         ne(jobRequests.clientId, actor.id),
         inArray(jobRequests.category, myCats),
         inArray(jobRequests.municipality, myAreas),
+        or(isNull(jobRequests.windowEnd), gt(jobRequests.windowEnd, new Date())),
       ),
     )
     .orderBy(desc(jobRequests.createdAt))
@@ -340,6 +359,10 @@ export async function updateRequest(
   removePhotoIds: string[] = [],
 ): Promise<{ id: string; version: number }> {
   if (!isUuid(id)) throw notFound("Užklausa nerasta");
+  checkDemoPhotos(actor, newPhotos);
+  if (!allow(`edit:${actor.id}`, 30, 3600 * 1000)) {
+    throw new AppError("RATE_LIMITED", "Per daug pakeitimų per valandą. Pabandykite vėliau.");
+  }
   const data = parseInput(requestInputSchema, input);
   const cols = columnsFromInput(data);
   checkAgainstNow(cols);
@@ -350,7 +373,8 @@ export async function updateRequest(
     await db.transaction(async (tx) => {
       const r = await loadRequest(tx, id, true);
       if (!r || r.clientId !== actor.id) throw notFound("Užklausa nerasta");
-      if (r.status !== "open") throw new AppError("REQUEST_CLOSED", "Keisti galima tik atvirą užklausą");
+      if (r.status !== "open" && r.status !== "expired") throw new AppError("REQUEST_CLOSED", "Keisti galima tik atvirą užklausą");
+      const reopening = r.status === "expired";
 
       const existingPhotos = await tx.select().from(jobPhotos).where(eq(jobPhotos.requestId, id));
       const toRemove = existingPhotos.filter((p) => removePhotoIds.includes(p.id));
@@ -359,10 +383,11 @@ export async function updateRequest(
       }
       await snapshot(tx, r);
       version = r.version + 1;
-      await tx
+      const [updated] = await tx
         .update(jobRequests)
-        .set({ ...cols, version, updatedAt: new Date() })
-        .where(eq(jobRequests.id, id));
+        .set({ ...cols, version, status: "open", updatedAt: new Date() })
+        .where(eq(jobRequests.id, id))
+        .returning();
       await tx
         .update(jobRequestPrivate)
         .set({ address: data.address, contactPhone: data.contactPhone, lat: data.lat, lng: data.lng })
@@ -391,6 +416,8 @@ export async function updateRequest(
           email: true,
         })),
       );
+      // Pasibaigusi užklausa paskelbiama iš naujo – teikėjai šalia vėl gauna pranešimą.
+      if (reopening) await notifyNearbyProviders(tx, updated);
     });
   } catch (err) {
     await deletePhotoFiles(id, newPhotos.map((p) => p.fileName)).catch(() => undefined);

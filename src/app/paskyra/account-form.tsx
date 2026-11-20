@@ -64,3 +64,55 @@ export function LogoutButton() {
     </Button>
   );
 }
+
+/** Paskyros ištrynimas su slaptažodžio patvirtinimu. */
+export function DeleteAccount() {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [password, setPassword] = useState("");
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  if (!open) {
+    return (
+      <Button variant="danger" onClick={() => setOpen(true)}>
+        Ištrinti paskyrą
+      </Button>
+    );
+  }
+  return (
+    <form
+      className="space-y-3"
+      onSubmit={async (e) => {
+        e.preventDefault();
+        setPending(true);
+        setError(null);
+        try {
+          await api("/api/v1/me/delete", { json: { password } });
+          router.push("/?paskyra=istrinta");
+          router.refresh();
+        } catch (err) {
+          setError((err as Error).message);
+          setPending(false);
+        }
+      }}
+    >
+      <Alert tone="warning" title="Ar tikrai?">
+        Bus ištrinti jūsų vardas, kontaktai, adresai, užklausų aprašymai ir nuotraukos. Atviros užklausos bus atšauktos, aktyvūs
+        pasiūlymai atsiimti. Kitai sandorio šaliai liks tik nuasmeninta užsakymų istorija. Atkurti paskyros nebus galima.
+      </Alert>
+      <Field label="Patvirtinkite slaptažodžiu" htmlFor="del-pass">
+        <Input id="del-pass" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+      </Field>
+      {error && <Alert tone="error">{error}</Alert>}
+      <div className="flex flex-wrap gap-2">
+        <Button type="submit" variant="danger" loading={pending} disabled={!password}>
+          Ištrinti visam laikui
+        </Button>
+        <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={pending}>
+          Atšaukti
+        </Button>
+      </div>
+    </form>
+  );
+}

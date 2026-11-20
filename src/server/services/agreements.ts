@@ -239,11 +239,15 @@ export async function getAgreement(actor: Actor, id: string): Promise<AgreementD
     seriesEnd: a.seriesEnd,
     startAt: a.startAt.toISOString(),
     included: a.included,
-    client: { name: client.name, phone: location.contactPhone || client.phone, email: client.email },
+    client: {
+      name: client.name,
+      phone: client.deletedAt ? null : location.contactPhone || client.phone,
+      email: client.deletedAt ? "" : client.email,
+    },
     provider: {
       name: provider.displayName,
-      phone: provider.phone,
-      email: providerUser.email,
+      phone: providerUser.deletedAt ? null : provider.phone,
+      email: providerUser.deletedAt ? "" : providerUser.email,
       businessForm: provider.businessForm,
       verified: provider.verifiedAt !== null,
     },

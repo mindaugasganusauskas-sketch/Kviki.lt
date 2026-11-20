@@ -9,6 +9,7 @@ test("naujas teikėjas užsiregistruoja, pasirenka paslaugas ir savivaldybes, pe
   await page.getByLabel("Vardas").fill("Jonas");
   await page.getByLabel("El. paštas").fill(email);
   await page.getByLabel("Slaptažodis").fill("slaptazodis123");
+  await page.getByRole("checkbox", { name: /Sutinku su/ }).check();
   await page.getByRole("button", { name: "Sukurti paskyrą" }).click();
 
   await expect(page.getByRole("heading", { name: "Tapkite teikėju" })).toBeVisible();

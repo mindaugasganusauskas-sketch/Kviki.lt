@@ -24,7 +24,7 @@ export const categoryEnum = pgEnum("category", ["mowing", "yard", "pruning", "he
 export const businessFormEnum = pgEnum("business_form", ["company", "individual"]);
 export const timingTypeEnum = pgEnum("timing_type", ["asap", "window", "flexible"]);
 export const frequencyEnum = pgEnum("frequency", ["weekly", "biweekly", "monthly"]);
-export const requestStatusEnum = pgEnum("request_status", ["open", "agreed", "on_hold", "cancelled", "completed"]);
+export const requestStatusEnum = pgEnum("request_status", ["open", "agreed", "on_hold", "cancelled", "completed", "expired"]);
 export const offerStatusEnum = pgEnum("offer_status", ["active", "withdrawn", "accepted", "closed"]);
 export const agreementStatusEnum = pgEnum("agreement_status", ["active", "completed", "cancelled", "ended"]);
 export const visitStatusEnum = pgEnum("visit_status", ["scheduled", "done", "confirmed", "problem", "cancelled"]);
@@ -38,6 +38,9 @@ export const users = pgTable("users", {
   phone: text("phone"),
   activeMode: modeEnum("active_mode").notNull().default("client"),
   isDemo: boolean("is_demo").notNull().default(false),
+  termsAcceptedAt: ts("terms_accepted_at"),
+  // Ištrinta paskyra anonimizuojama: lieka tik tai, ko reikia kitos šalies užsakymų istorijai.
+  deletedAt: ts("deleted_at"),
   createdAt: createdAt(),
 });
 

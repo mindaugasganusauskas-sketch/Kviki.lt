@@ -48,7 +48,7 @@ export const uid = () => randomUUID().slice(0, 8);
 export async function newUser(label: string, extra: Record<string, unknown> = {}) {
   const d = new Device(label);
   const email = `${label}-${uid()}@test.kviki.lt`;
-  const r = await d.post("/api/v1/auth/register", { name: label, email, password: "slaptazodis123", phone: "+37061111111", ...extra });
+  const r = await d.post("/api/v1/auth/register", { name: label, email, password: "slaptazodis123", phone: "+37061111111", acceptTerms: true, ...extra });
   if (r.status !== 200) throw new Error(`register ${label}: ${r.status} ${JSON.stringify(r.body)}`);
   return Object.assign(d, { email, userId: r.body.user.id as string });
 }

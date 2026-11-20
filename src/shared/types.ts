@@ -4,7 +4,7 @@ import type { BusinessForm } from "./format";
 import type { Frequency } from "./time";
 
 export type Mode = "client" | "provider";
-export type RequestStatus = "open" | "agreed" | "on_hold" | "cancelled" | "completed";
+export type RequestStatus = "open" | "agreed" | "on_hold" | "cancelled" | "completed" | "expired";
 export type OfferStatus = "active" | "withdrawn" | "accepted" | "closed";
 export type AgreementStatus = "active" | "completed" | "cancelled" | "ended";
 export type VisitStatus = "scheduled" | "done" | "confirmed" | "problem" | "cancelled";

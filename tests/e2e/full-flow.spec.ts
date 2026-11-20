@@ -16,7 +16,7 @@ async function apiProvider(browser: Browser, name: string, form: "company" | "in
   const email = `teikejas-${uid()}@e2e.kviki.lt`;
   await page.goto("/");
   const reg = await page.request.post("/api/v1/auth/register", {
-    data: { name, email, password: "slaptazodis123" },
+    data: { name, email, password: "slaptazodis123", acceptTerms: true },
     headers: { Origin: new URL(page.url()).origin },
   });
   expect(reg.ok()).toBeTruthy();
@@ -67,6 +67,7 @@ test("klientas telefone paskelbia darbą, du teikėjai pasiūlo, klientas pasire
   await phone.getByLabel("Vardas").fill("Rūta");
   await phone.getByLabel("El. paštas").fill(clientEmail);
   await phone.getByLabel("Slaptažodis").fill("slaptazodis123");
+  await phone.getByRole("checkbox", { name: /Sutinku su/ }).check();
   await shot(phone, "04-perziura-ir-paskyra");
   await phone.getByRole("button", { name: "Sukurti paskyrą ir paskelbti" }).click();
 

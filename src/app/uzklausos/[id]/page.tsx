@@ -112,6 +112,22 @@ export default async function RequestPage(props: PageProps<"/uzklausos/[id]">) {
 
       {view.status === "cancelled" && <Alert tone="info" title="Užklausa atšaukta">Teikėjai jos nebemato.</Alert>}
 
+      {view.status === "expired" && (
+        <Alert
+          tone="warning"
+          title="Užklausa nebegalioja"
+          action={
+            <>
+              <ButtonLink href={`/uzklausos/${id}/redaguoti`}>Atnaujinti su nauju laiku</ButtonLink>
+              <ActionButton endpoint={`/api/v1/requests/${id}/cancel`} label="Uždaryti" variant="outline" />
+            </>
+          }
+        >
+          Nurodytas laikas praėjo arba ilgai nebuvo susitarta, todėl teikėjai jos nebemato. Jei darbo vis dar reikia, nurodykite
+          naują laiką – užklausa vėl bus paskelbta.
+        </Alert>
+      )}
+
       <section>
         <SectionTitle
           action={

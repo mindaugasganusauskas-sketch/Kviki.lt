@@ -40,7 +40,7 @@ export async function register(input: unknown, ip: string): Promise<{ userId: st
   try {
     const [row] = await db
       .insert(users)
-      .values({ email: data.email, passwordHash, name: data.name, phone: data.phone ?? null })
+      .values({ email: data.email, passwordHash, name: data.name, phone: data.phone ?? null, termsAcceptedAt: new Date() })
       .returning({ id: users.id });
     return { userId: row.id, mode: data.mode ?? "client" };
   } catch (err) {

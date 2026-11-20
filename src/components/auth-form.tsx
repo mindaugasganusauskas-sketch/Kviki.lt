@@ -25,6 +25,7 @@ export function AuthForm({
   const [phone, setPhone] = useState(defaults?.phone ?? "");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [accept, setAccept] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -36,7 +37,7 @@ export function AuthForm({
       const res =
         tab === "register"
           ? await api<{ user: UserDTO }>("/api/v1/auth/register", {
-              json: { name, email, password, phone: phone || null },
+              json: { name, email, password, phone: phone || null, acceptTerms: accept },
             })
           : await api<{ user: UserDTO }>("/api/v1/auth/login", { json: { email, password } });
       await onSuccess(res.user);
@@ -116,6 +117,27 @@ export function AuthForm({
               placeholder="+370 600 00000"
             />
           </Field>
+        )}
+        {tab === "register" && (
+          <label className="flex items-start gap-3 text-sm leading-relaxed">
+            <input
+              type="checkbox"
+              checked={accept}
+              onChange={(e) => setAccept(e.target.checked)}
+              className="mt-0.5 size-5 shrink-0 accent-brand-600"
+            />
+            <span>
+              Sutinku su{" "}
+              <a href="/taisykles" target="_blank" className="font-semibold text-brand-700 underline">
+                naudojimosi taisyklėmis
+              </a>{" "}
+              ir susipažinau su{" "}
+              <a href="/privatumas" target="_blank" className="font-semibold text-brand-700 underline">
+                privatumo politika
+              </a>
+              .
+            </span>
+          </label>
         )}
         {error && <Alert tone="error">{error}</Alert>}
         <Button type="submit" size="lg" className="w-full" loading={pending}>

@@ -58,7 +58,11 @@ export default async function ProviderRequestPage(props: PageProps<"/darbai-sali
       )}
       {lost && (
         <Alert tone="info" title="Užklausa baigėsi">
-          {view.status === "cancelled" ? "Klientas atšaukė užklausą." : "Klientas pasirinko kitą pasiūlymą. Ačiū, kad pasiūlėte."}
+          {view.status === "cancelled"
+            ? "Klientas atšaukė užklausą."
+            : view.status === "expired"
+              ? "Užklausos laikas praėjo. Jei klientas ją atnaujins, gausite pranešimą."
+              : "Klientas pasirinko kitą pasiūlymą. Ačiū, kad pasiūlėte."}
         </Alert>
       )}
 

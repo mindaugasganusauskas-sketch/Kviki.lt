@@ -6,18 +6,24 @@ import { listMyRequests } from "@/server/services/requests";
 import { demoEnabled } from "@/server/services/demo";
 import { CATEGORIES } from "@/shared/categories";
 import { CategoryIcon } from "@/components/category-icon";
-import { ButtonLink, Card } from "@/components/ui";
+import { Alert, ButtonLink, Card } from "@/components/ui";
 import { FreeTextStart } from "./free-text-start";
 import { DemoButtons } from "./demo-buttons";
 import { RequestListCard } from "@/components/request-list-card";
 
-export default async function HomePage() {
+export default async function HomePage(props: PageProps<"/">) {
+  const sp = await props.searchParams;
   const actor = await getActor();
   if (actor?.mode === "provider") redirect("/darbai-salia");
   const recent = actor ? (await listMyRequests(actor)).filter((r) => r.status === "open" || r.status === "agreed").slice(0, 3) : [];
 
   return (
     <div className="space-y-10">
+      {sp.paskyra === "istrinta" && !actor && (
+        <Alert tone="success" title="Paskyra ištrinta">
+          Jūsų asmens duomenys pašalinti. Ačiū, kad naudojotės Kviki.
+        </Alert>
+      )}
       <section className="rounded-3xl bg-gradient-to-br from-brand-700 to-brand-900 px-5 py-8 text-white sm:px-10 sm:py-12">
         <p className="text-sm font-semibold uppercase tracking-wider text-brand-200">Vietinė pagalba kiemo ir ūkio darbams</p>
         <h1 className="mt-2 text-3xl font-extrabold leading-tight sm:text-4xl">Kokios pagalbos reikia?</h1>

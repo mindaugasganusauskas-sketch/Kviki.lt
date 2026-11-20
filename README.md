@@ -29,6 +29,10 @@ Tai pirmoji versija pagal `Talka_projekto_aprasas.md` (darbinis pavadinimas „T
 - Puslapiai su užklausomis ir pasiūlymais atsinaujina patys, todėl keliuose įrenginiuose matoma tikroji būsena.
 - Visur parodytos laukimo, tuščio sąrašo, ryšio klaidos ir sėkmės būsenos.
 - Lietuvių kalba, eurai, „Europe/Vilnius“ laiko juosta (įskaitant vasaros ir žiemos laiko keitimą).
+- **Privatumo politika** (`/privatumas`) ir **naudojimosi taisyklės** (`/taisykles`). Registruojantis būtina su jomis sutikti. Valdytojo rekvizitai keičiami `src/shared/operator.ts`.
+- **Paskyros ištrynimas** paskyros puslapyje (reikia slaptažodžio). Asmens duomenys ir nuotraukos pašalinami, o kitai šaliai lieka tik nuasmeninta užsakymų istorija. Kol yra aktyvių užsakymų, ištrinti neleidžiama.
+- **Pasenusios užklausos uždaromos automatiškai** (kas 10 min.): praėjus nurodytam laikui, „Kuo greičiau“ užklausos – po 14 d., kitos – po 30 d. be pakeitimų. Klientas gali užklausą atnaujinti nauju laiku.
+- **Apsaugos ribos:** iki 10 naujų užklausų per parą vienam naudotojui, iki 60 pasiūlymų ir 30 užklausos pakeitimų per valandą, demonstracijoje nuotraukų įkelti negalima.
 
 **Užsakymo taisyklės (aprašo 6 skyrius)**
 

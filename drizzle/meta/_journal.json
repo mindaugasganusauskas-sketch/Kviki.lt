@@ -8,6 +8,13 @@
       "when": 1795185076576,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1795197941486,
+      "tag": "0001_paskyros_ir_galiojimas",
+      "breakpoints": true
     }
   ]
 }

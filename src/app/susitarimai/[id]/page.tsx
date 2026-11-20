@@ -285,9 +285,13 @@ function ContactLinks({ phone, email }: { phone: string | null; email: string })
           <Phone className="size-4" aria-hidden /> {phone}
         </a>
       )}
-      <a href={`mailto:${email}`} className="inline-flex items-center gap-1.5 font-semibold text-brand-700 hover:underline">
-        <Mail className="size-4" aria-hidden /> {email}
-      </a>
+      {email ? (
+        <a href={`mailto:${email}`} className="inline-flex items-center gap-1.5 font-semibold text-brand-700 hover:underline">
+          <Mail className="size-4" aria-hidden /> {email}
+        </a>
+      ) : (
+        <span className="text-muted">Paskyra ištrinta – kontaktai nebepasiekiami</span>
+      )}
     </div>
   );
 }

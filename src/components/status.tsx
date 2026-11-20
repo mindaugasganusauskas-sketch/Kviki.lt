@@ -19,6 +19,8 @@ export function RequestStatusBadge({ status, offerCount }: { status: RequestStat
       return <Badge>Atšaukta</Badge>;
     case "completed":
       return <Badge tone="green">Užbaigta</Badge>;
+    case "expired":
+      return <Badge>Nebegalioja</Badge>;
   }
 }
 

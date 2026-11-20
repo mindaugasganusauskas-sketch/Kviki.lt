@@ -46,6 +46,7 @@ export const registerSchema = z.object({
   password: z.string().min(8, { error: "Slaptažodis turi būti bent 8 simbolių" }).max(200),
   phone: z.union([phoneSchema, z.literal("").transform(() => null), z.null()]).optional(),
   mode: z.enum(["client", "provider"]).optional(),
+  acceptTerms: z.literal(true, { error: "Pažymėkite, kad sutinkate su taisyklėmis ir privatumo politika" }),
 });
 export type RegisterInput = z.input<typeof registerSchema>;
 

@@ -13,7 +13,7 @@ export default async function NewRequestPage(props: PageProps<"/nauja-uzklausa">
   return (
     <RequestWizard
       mode="create"
-      user={actor ? { name: actor.name, phone: actor.phone } : null}
+      user={actor ? { name: actor.name, phone: actor.phone, isDemo: actor.isDemo } : null}
       startCategory={cat}
       startText={text}
     />

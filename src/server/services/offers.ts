@@ -3,6 +3,7 @@ import { db } from "@/server/db";
 import { agreements, jobRequests, offers, providerProfiles } from "@/server/db/schema";
 import type { Actor } from "@/server/auth/session";
 import { AppError, notFound, parseInput } from "@/server/errors";
+import { allow } from "@/server/auth/rate-limit";
 import { requestHeadline } from "@/shared/categories";
 import { formatPriceLabel } from "@/shared/format";
 import { municipalityLabel } from "@/shared/municipalities";
@@ -23,6 +24,9 @@ function requireProvider(actor: Actor) {
  */
 export async function submitOffer(actor: Actor, requestId: string, input: unknown): Promise<OfferDTO> {
   requireProvider(actor);
+  if (!allow(`offer:${actor.id}`, 60, 3600 * 1000)) {
+    throw new AppError("RATE_LIMITED", "Per daug pasiūlymų per valandą. Pabandykite vėliau.");
+  }
   const data = parseInput(offerInputSchema, input);
   const startAt = new Date(data.startAt);
   if (startAt.getTime() < Date.now() - 10 * 60 * 1000) {
