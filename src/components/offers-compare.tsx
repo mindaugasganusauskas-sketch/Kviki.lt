@@ -186,17 +186,15 @@ export function OffersCompare({ requestId, offers }: { requestId: string; offers
           <li key={o.id} className={cx("rounded-2xl border border-line bg-white p-4", o.needsReconfirmation && "opacity-70")} data-testid="offer-card">
             <div className="flex items-start justify-between gap-3">
               <PriceBlock offer={o} />
-              <div className="text-right">
-                <p className="inline-flex items-center gap-1 font-semibold">
-                  <CalendarClock className="size-4 text-brand-600" aria-hidden />
-                  {formatDateTime(o.startAt)}
-                </p>
-                <div className="mt-1 flex flex-wrap justify-end gap-1">
-                  {o.priceCents === cheapest && !o.needsReconfirmation && offers.length > 1 && <Badge tone="green">Pigiausia</Badge>}
-                  {o.startAt === earliest && !o.needsReconfirmation && offers.length > 1 && <Badge tone="blue">Anksčiausiai</Badge>}
-                </div>
+              <div className="flex flex-wrap justify-end gap-1">
+                {o.priceCents === cheapest && !o.needsReconfirmation && offers.length > 1 && <Badge tone="green">Pigiausia</Badge>}
+                {o.startAt === earliest && !o.needsReconfirmation && offers.length > 1 && <Badge tone="blue">Anksčiausiai</Badge>}
               </div>
             </div>
+            <p className="mt-2 flex items-center gap-1.5 font-semibold">
+              <CalendarClock className="size-4 shrink-0 text-brand-600" aria-hidden />
+              {formatDateTime(o.startAt)}
+            </p>
             <div className="mt-3 border-t border-line pt-3">
               <ProviderLine offer={o} />
               <p className="mt-2 text-sm">{o.included}</p>

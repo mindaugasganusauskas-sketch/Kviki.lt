@@ -13,6 +13,15 @@ export const metadata: Metadata = {
   description:
     "Aprašykite darbą vieną kartą – vietos teikėjai pasiūlys kainą ir laiką. Žolės pjovimas, kiemo tvarkymas, genėjimas ir pagalbiniai darbai.",
   applicationName: "Kviki",
+  metadataBase: new URL(process.env.APP_URL ?? "http://localhost:3000"),
+  openGraph: {
+    type: "website",
+    locale: "lt_LT",
+    siteName: "Kviki",
+    title: "Kviki – vietinė pagalba kiemo ir ūkio darbams",
+    description: "Aprašykite darbą vieną kartą – vietos teikėjai pasiūlys kainą ir laiką.",
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Kviki" }],
+  },
   manifest: "/manifest.webmanifest",
   icons: { icon: "/icon.svg", apple: "/apple-icon.png" },
 };

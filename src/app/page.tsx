@@ -46,9 +46,8 @@ export default async function HomePage(props: PageProps<"/">) {
         </Alert>
       )}
 
-      <section className="relative -mx-4 overflow-hidden bg-gradient-to-br from-brand-700 via-brand-800 to-brand-900 px-5 pb-10 pt-9 text-white sm:mx-0 sm:rounded-[2rem] sm:px-10 sm:pb-14 sm:pt-12">
-        <div className="pointer-events-none absolute -right-10 -top-10 size-40 rounded-full bg-sun-400 opacity-90 sm:-right-6 sm:-top-6 sm:size-44" aria-hidden />
-        <div className="pointer-events-none absolute -right-24 -top-24 size-80 rounded-full bg-sun-300/20 blur-2xl" aria-hidden />
+      <section className="relative -mx-4 -mt-5 overflow-hidden bg-gradient-to-br from-brand-700 via-brand-800 to-brand-900 px-5 pb-10 pt-9 text-white sm:mx-0 sm:mt-0 sm:rounded-[2rem] sm:px-10 sm:pb-14 sm:pt-12">
+        <div className="pointer-events-none absolute -right-16 -top-16 size-36 rounded-full bg-sun-400 shadow-[0_0_0_18px_rgba(255,198,26,0.12)] sm:-right-8 sm:-top-8 sm:size-44 sm:shadow-[0_0_0_28px_rgba(255,198,26,0.12)]" aria-hidden />
         <Grass className="pointer-events-none absolute inset-x-0 bottom-0 h-10 w-full text-brand-600/60 sm:h-14" />
 
         <div className="relative">

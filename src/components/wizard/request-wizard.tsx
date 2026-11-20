@@ -20,7 +20,7 @@ import { MUNICIPALITIES, municipalityLabel } from "@/shared/municipalities";
 import { FREQUENCIES, vilniusDateKey, vilniusToDate, type Frequency } from "@/shared/time";
 import type { PhotoDTO, UserDTO } from "@/shared/types";
 import { AuthForm } from "../auth-form";
-import { CategoryBadge, CategoryIcon } from "../category-icon";
+import { CategoryBadge } from "../category-icon";
 import { Alert, Button, Card, Field, Input, Select, Textarea, cx } from "../ui";
 import { LocationButton } from "./location-button";
 import { PhotoPicker } from "./photo-picker";
@@ -278,9 +278,7 @@ export function RequestWizard(props: WizardProps) {
                     cat === c.id ? "border-brand-500 bg-brand-50 ring-1 ring-brand-500" : "border-line bg-white hover:border-brand-300",
                   )}
                 >
-                  <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white text-brand-700 ring-1 ring-brand-100">
-                    <CategoryIcon category={c.id} className="size-6" />
-                  </span>
+                  <CategoryBadge category={c.id} />
                   <span>
                     <span className="block font-bold">{c.label}</span>
                     <span className="block text-sm text-muted">{c.hint}</span>

@@ -153,3 +153,38 @@ describe("Apsaugos ribos", () => {
   });
 });
 
+
+describe("Saugumo pataisymai", () => {
+  it("slaptažodžio keitimas: reikia dabartinio, kiti įrenginiai atjungiami", async () => {
+    const u = await newUser("keicia-slapt");
+    const other = new Device("kitas-irenginys");
+    await other.post("/api/v1/auth/login", { email: u.email, password: "slaptazodis123" });
+    expect((await other.get("/api/v1/me")).status).toBe(200);
+
+    const bad = await u.post("/api/v1/me/password", { currentPassword: "blogas", newPassword: "naujas-slapt-1" });
+    expect(bad.status).toBe(400);
+    const ok = await u.post("/api/v1/me/password", { currentPassword: "slaptazodis123", newPassword: "naujas-slapt-1" });
+    expect(ok.status).toBe(200);
+
+    expect((await u.get("/api/v1/me")).status).toBe(200); // šis įrenginys lieka prisijungęs
+    expect((await other.get("/api/v1/me")).status).toBe(401); // kitas atjungtas
+    expect((await new Device("x").post("/api/v1/auth/login", { email: u.email, password: "slaptazodis123" })).status).toBe(401);
+    expect((await new Device("y").post("/api/v1/auth/login", { email: u.email, password: "naujas-slapt-1" })).status).toBe(200);
+  });
+
+  it("siunčiamos saugumo antraštės (CSP, HSTS, X-Frame-Options)", async () => {
+    const r = await fetch(BASE + "/");
+    expect(r.headers.get("content-security-policy")).toContain("frame-ancestors 'none'");
+    expect(r.headers.get("strict-transport-security")).toContain("max-age=");
+    expect(r.headers.get("x-frame-options")).toBe("DENY");
+    expect(r.headers.get("x-powered-by")).toBeNull();
+  });
+
+  it("robots.txt ir sitemap.xml pasiekiami, privatūs puslapiai neindeksuojami", async () => {
+    const robots = await (await fetch(BASE + "/robots.txt")).text();
+    expect(robots).toContain("Disallow: /api/");
+    expect(robots).toContain("sitemap.xml");
+    expect((await fetch(BASE + "/sitemap.xml")).status).toBe(200);
+    expect((await fetch(BASE + "/og.png")).status).toBe(200);
+  });
+});

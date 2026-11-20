@@ -6,6 +6,7 @@ import { guessMunicipality, MUNICIPALITIES } from "@/shared/municipalities";
 import { normalizePhone, parseEurToCents, requestInputSchema } from "@/shared/schemas";
 import { nthOccurrence, vilniusDateKey, vilniusTimeKey, vilniusToDate } from "@/shared/time";
 import { guessCategory, quickWindows } from "@/components/wizard/state";
+import { safeNext } from "@/lib/safe-next";
 
 describe("savivaldybės", () => {
   it("visos 60 Lietuvos savivaldybių, kodai unikalūs", () => {
@@ -105,5 +106,15 @@ describe("įvesties validacija", () => {
     expect(bad.success).toBe(false);
     const good = requestInputSchema.safeParse({ ...base, description: "Reikia sukrauti malkas į pašiūrę" });
     expect(good.success).toBe(true);
+  });
+});
+
+describe("grįžimo nuoroda po prisijungimo", () => {
+  it("leidžia tik šios svetainės kelius", () => {
+    expect(safeNext("/mano-uzklausos")).toBe("/mano-uzklausos");
+    expect(safeNext("//evil.example")).toBeNull();
+    expect(safeNext("/\\evil.example")).toBeNull();
+    expect(safeNext("https://evil.example")).toBeNull();
+    expect(safeNext(undefined)).toBeNull();
   });
 });
