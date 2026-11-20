@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { OPERATOR } from "@/shared/operator";
+import { OPERATOR, operatorLine } from "@/shared/operator";
 import { Alert, Card, PageHeader } from "@/components/ui";
 
 export const metadata: Metadata = { title: "Privatumo politika" };
@@ -28,8 +28,7 @@ export default function PrivacyPage() {
 
         <H>1. Kas tvarko jūsų duomenis</H>
         <p>
-          Duomenų valdytojas: <strong>{OPERATOR.name}</strong>, įmonės kodas {OPERATOR.code}
-          {OPERATOR.address ? `, adresas ${OPERATOR.address}` : ""}. Klausimais dėl duomenų rašykite{" "}
+          Duomenų valdytojas: <strong>{operatorLine()}</strong>. Klausimais dėl duomenų rašykite{" "}
           <strong>{OPERATOR.email}</strong>.
         </p>
 
