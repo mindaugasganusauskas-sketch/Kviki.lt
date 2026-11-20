@@ -1,0 +1,58 @@
+# Kviki diegimas viename serveryje: svetainė + PostgreSQL + Caddy (automatinis HTTPS).
+# Naudojimas: cp deploy/env.example .env && nano .env && docker compose up -d --build
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: kviki
+      POSTGRES_USER: kviki
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Įrašykite POSTGRES_PASSWORD į .env failą}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kviki -d kviki"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://kviki:${POSTGRES_PASSWORD}@db:5432/kviki
+      APP_URL: ${APP_URL:-https://${DOMAIN}}
+      DEMO_ENABLED: ${DEMO_ENABLED:-true}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-465}
+      SMTP_SECURE: ${SMTP_SECURE:-true}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      MAIL_FROM: ${MAIL_FROM:-Kviki <info@kviki.lt>}
+    volumes:
+      - uploads:/data/uploads
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN:?Įrašykite DOMAIN į .env failą}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  pgdata:
+  uploads:
+  caddy_data:
+  caddy_config:

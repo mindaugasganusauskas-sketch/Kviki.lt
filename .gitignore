@@ -1,0 +1,15 @@
+*.tsbuildinfo
+.DS_Store
+.env
+.env.*.local
+.env.local
+.next/
+/backups/
+/playwright-report/
+/screenshots/
+/test-results/
+/uploads/
+next-env.d.ts
+node_modules/
+npm-debug.log*
+out/

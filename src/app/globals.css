@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  --color-brand-50: #f0f7ee;
+  --color-brand-100: #dcecd7;
+  --color-brand-200: #bbdab1;
+  --color-brand-300: #90c182;
+  --color-brand-400: #67a556;
+  --color-brand-500: #4a8a3a;
+  --color-brand-600: #386e2c;
+  --color-brand-700: #2d5725;
+  --color-brand-800: #264620;
+  --color-brand-900: #1f3a1c;
+
+  --color-sun-50: #fff8eb;
+  --color-sun-100: #feecc7;
+  --color-sun-200: #fdd68a;
+  --color-sun-400: #f6a823;
+  --color-sun-600: #c86f07;
+  --color-sun-700: #a54f0a;
+
+  --color-ink: #1c2419;
+  --color-muted: #5c6758;
+  --color-line: #e2e6de;
+  --color-paper: #f7f8f4;
+}
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+
+/* Telefone apatinė navigacija neturi uždengti turinio. */
+.pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom), 0px);
+}
+
+input[type="date"],
+input[type="time"] {
+  min-height: 2.75rem;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+}
