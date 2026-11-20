@@ -108,6 +108,8 @@ Pakanka vieno VPS. Svetainė, duomenų bazė ir nuotraukos veikia tame pačiame 
 
 **Reikalavimai:** Ubuntu 22.04 arba 24.04, bent 2 GB RAM (Hostinger KVM 1 su 4 GB pakanka), atidaryti 22, 80 ir 443 prievadai.
 
+**Jei serveryje jau veikia kitos svetainės per nginx**, skriptas tai atpažįsta ir jų neliečia. Tokiu atveju Kviki veikia serverio viduje (`127.0.0.1:3010`), o esamas nginx gauna naują svetainės failą `/etc/nginx/sites-available/kviki`, kuris nukreipia kviki.lt į Kviki. HTTPS sertifikatą išduoda `certbot`. Prieš perkraunant nginx nustatymai visada patikrinami (`nginx -t`). Jei patikra nepavyktų, Kviki nustatymai pašalinami, o kitos svetainės veikia kaip anksčiau.
+
 **Trumpai:** nukreipkite DNS (1 žingsnis), įdėkite „Deploy key“ ir parsisiųskite kodą (3 žingsnis), tada paleiskite `./scripts/install-vps.sh kviki.lt`. Skriptas įdiegia Docker, patikrina, ar laisvi 80 ir 443 prievadai, sukuria `.env` su atsitiktiniu slaptažodžiu, paleidžia svetainę ir patikrina DNS. Žemiau – tas pats, tik žingsnis po žingsnio.
 
 1. **DNS.** Hostinger skydelyje (hPanel → Domenai → DNS zona) nustatykite `A` įrašus `@` ir `www`, rodančius į VPS IP adresą. Pasikeitimas gali užtrukti iki kelių valandų.

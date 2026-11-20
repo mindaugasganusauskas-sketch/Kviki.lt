@@ -13,6 +13,11 @@ git fetch --quiet origin "$branch"
 local_rev=$(git rev-parse HEAD)
 remote_rev=$(git rev-parse "origin/$branch")
 [ "$local_rev" = "$remote_rev" ] && exit 0
+# Atnaujiname tik tada, kai GitHub'e yra naujesnė tos pačios istorijos versija.
+if ! git merge-base --is-ancestor "$local_rev" "$remote_rev"; then
+  echo "$(date '+%F %T') Serverio kopija skiriasi nuo GitHub (vietiniai pakeitimai?) – atnaujinimas praleistas."
+  exit 0
+fi
 # Nekartojame nepavykusio surinkimo kas 5 min. – laukiame naujesnio pakeitimo.
 [ "$(cat .auto-update-failed 2>/dev/null || true)" = "$remote_rev" ] && exit 0
 
