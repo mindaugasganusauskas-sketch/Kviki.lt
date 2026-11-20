@@ -106,6 +106,8 @@ Pakanka vieno VPS. Svetainė, duomenų bazė ir nuotraukos veikia tame pačiame 
 
 **Reikalavimai:** Ubuntu 22.04 arba 24.04, bent 2 GB RAM (Hostinger KVM 1 su 4 GB pakanka), atidaryti 22, 80 ir 443 prievadai.
 
+**Trumpai:** nukreipkite DNS (1 žingsnis), įdėkite „Deploy key“ ir parsisiųskite kodą (3 žingsnis), tada paleiskite `./scripts/install-vps.sh kviki.lt`. Skriptas įdiegia Docker, patikrina, ar laisvi 80 ir 443 prievadai, sukuria `.env` su atsitiktiniu slaptažodžiu, paleidžia svetainę ir patikrina DNS. Žemiau – tas pats, tik žingsnis po žingsnio.
+
 1. **DNS.** Hostinger skydelyje (hPanel → Domenai → DNS zona) nustatykite `A` įrašus `@` ir `www`, rodančius į VPS IP adresą. Pasikeitimas gali užtrukti iki kelių valandų.
 
 2. **Docker.** Prisijunkite per SSH ir įdiekite Docker:
@@ -119,7 +121,7 @@ Pakanka vieno VPS. Svetainė, duomenų bazė ir nuotraukos veikia tame pačiame 
    - paprasčiausia – GitHub „Deploy key“: serveryje `ssh-keygen -t ed25519`, o viešąjį raktą (`~/.ssh/id_ed25519.pub`) įdėkite saugykloje: Settings → Deploy keys;
    - tada:
    ```bash
-   git clone git@github.com:mindaugasganusauskas-sketch/Kviki.lt.git /opt/kviki
+   git clone -b claude/website-creation-fumd3n git@github.com:mindaugasganusauskas-sketch/Kviki.lt.git /opt/kviki
    cd /opt/kviki
    ```
 
