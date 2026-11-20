@@ -4,6 +4,7 @@ import { useState } from "react";
 import { api } from "@/lib/api-client";
 import type { UserDTO } from "@/shared/types";
 import { Alert, Button, Field, Input, cx } from "./ui";
+import { useI18n } from "@/i18n/client";
 
 type Tab = "register" | "login";
 
@@ -20,6 +21,7 @@ export function AuthForm({
   providerIntent?: boolean;
   submitLabel?: { register?: string; login?: string };
 }) {
+  const { t } = useI18n();
   const [tab, setTab] = useState<Tab>(initialTab);
   const [name, setName] = useState(defaults?.name ?? "");
   const [phone, setPhone] = useState(defaults?.phone ?? "");
@@ -52,8 +54,8 @@ export function AuthForm({
       <div className="mb-5 grid grid-cols-2 rounded-xl bg-stone-100 p-1" role="tablist">
         {(
           [
-            ["register", "Esu naujas"],
-            ["login", "Jau turiu paskyrą"],
+            ["register", t.auth.tabNew],
+            ["login", t.auth.tabLogin],
           ] as const
         ).map(([key, label]) => (
           <button
@@ -76,11 +78,11 @@ export function AuthForm({
       </div>
       <form onSubmit={submit} className="space-y-4" noValidate>
         {tab === "register" && (
-          <Field label="Vardas" htmlFor="auth-name">
+          <Field label={t.auth.name} htmlFor="auth-name">
             <Input id="auth-name" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} required />
           </Field>
         )}
-        <Field label="El. paštas" htmlFor="auth-email">
+        <Field label={t.auth.email} htmlFor="auth-email">
           <Input
             id="auth-email"
             type="email"
@@ -92,9 +94,9 @@ export function AuthForm({
           />
         </Field>
         <Field
-          label="Slaptažodis"
+          label={t.auth.password}
           htmlFor="auth-password"
-          hint={tab === "register" ? "Bent 8 simboliai" : undefined}
+          hint={tab === "register" ? t.auth.passwordHint : undefined}
         >
           <Input
             id="auth-password"
@@ -106,7 +108,7 @@ export function AuthForm({
           />
         </Field>
         {tab === "register" && (
-          <Field label="Telefonas" htmlFor="auth-phone" optional hint="Jį matys tik tas teikėjas ar klientas, su kuriuo susitarsite.">
+          <Field label={t.auth.phone} htmlFor="auth-phone" optional hint={t.auth.phoneHint}>
             <Input
               id="auth-phone"
               type="tel"
@@ -127,13 +129,13 @@ export function AuthForm({
               className="mt-0.5 size-5 shrink-0 accent-brand-600"
             />
             <span>
-              Sutinku su{" "}
+              {t.auth.acceptBefore}{" "}
               <a href="/taisykles" target="_blank" className="font-semibold text-brand-700 underline">
-                naudojimosi taisyklėmis
+                {t.auth.acceptTerms}
               </a>{" "}
-              ir susipažinau su{" "}
+              {t.auth.acceptMiddle}{" "}
               <a href="/privatumas" target="_blank" className="font-semibold text-brand-700 underline">
-                privatumo politika
+                {t.auth.acceptPrivacy}
               </a>
               .
             </span>
@@ -141,7 +143,7 @@ export function AuthForm({
         )}
         {error && <Alert tone="error">{error}</Alert>}
         <Button type="submit" size="lg" className="w-full" loading={pending}>
-          {tab === "register" ? (submitLabel?.register ?? "Sukurti paskyrą") : (submitLabel?.login ?? "Prisijungti")}
+          {tab === "register" ? (submitLabel?.register ?? t.auth.createAccount) : (submitLabel?.login ?? t.auth.login)}
         </Button>
       </form>
     </div>

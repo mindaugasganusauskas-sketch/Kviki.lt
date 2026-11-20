@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Camera, ImagePlus, X } from "lucide-react";
 import type { PhotoDTO } from "@/shared/types";
+import { useI18n } from "@/i18n/client";
 
 export const MAX_PHOTOS = 6;
 
@@ -38,6 +39,7 @@ export function PhotoPicker({
   removedIds?: string[];
   onToggleExisting?: (id: string) => void;
 }) {
+  const { t } = useI18n();
   const cameraRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
   const [previews, setPreviews] = useState<string[]>([]);
@@ -69,7 +71,7 @@ export function PhotoPicker({
           onClick={() => cameraRef.current?.click()}
           className="inline-flex h-11 items-center gap-2 rounded-xl border border-line bg-white px-4 text-sm font-semibold hover:bg-paper disabled:opacity-50"
         >
-          <Camera className="size-5 text-brand-600" aria-hidden /> Fotografuoti
+          <Camera className="size-5 text-brand-600" aria-hidden /> {t.photos.camera}
         </button>
         <button
           type="button"
@@ -77,7 +79,7 @@ export function PhotoPicker({
           onClick={() => galleryRef.current?.click()}
           className="inline-flex h-11 items-center gap-2 rounded-xl border border-line bg-white px-4 text-sm font-semibold hover:bg-paper disabled:opacity-50"
         >
-          <ImagePlus className="size-5 text-brand-600" aria-hidden /> Iš galerijos
+          <ImagePlus className="size-5 text-brand-600" aria-hidden /> {t.photos.gallery}
         </button>
         <input
           ref={cameraRef}
@@ -89,7 +91,7 @@ export function PhotoPicker({
             void add(e.target.files);
             e.target.value = "";
           }}
-          aria-label="Fotografuoti"
+          aria-label={t.photos.camera}
         />
         <input
           ref={galleryRef}
@@ -102,7 +104,7 @@ export function PhotoPicker({
             void add(e.target.files);
             e.target.value = "";
           }}
-          aria-label="Pasirinkti nuotraukas"
+          aria-label={t.photos.choose}
         />
       </div>
       {(keptExisting.length > 0 || files.length > 0 || existing.length > 0) && (
@@ -117,7 +119,7 @@ export function PhotoPicker({
                   type="button"
                   onClick={() => onToggleExisting?.(p.id)}
                   className="absolute -right-1.5 -top-1.5 rounded-full bg-white p-1 shadow ring-1 ring-line"
-                  aria-label={removed ? "Grąžinti nuotrauką" : "Pašalinti nuotrauką"}
+                  aria-label={removed ? t.photos.restore : t.photos.remove}
                 >
                   <X className="size-3.5" aria-hidden />
                 </button>
@@ -127,12 +129,12 @@ export function PhotoPicker({
           {previews.map((url, i) => (
             <li key={url} className="relative">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={url} alt={`Nauja nuotrauka ${i + 1}`} className="size-24 rounded-xl border border-line object-cover" />
+              <img src={url} alt={t.photos.newPhoto(i + 1)} className="size-24 rounded-xl border border-line object-cover" />
               <button
                 type="button"
                 onClick={() => onFiles(files.filter((_, j) => j !== i))}
                 className="absolute -right-1.5 -top-1.5 rounded-full bg-white p-1 shadow ring-1 ring-line"
-                aria-label="Pašalinti nuotrauką"
+                aria-label={t.photos.remove}
               >
                 <X className="size-3.5" aria-hidden />
               </button>
@@ -141,7 +143,7 @@ export function PhotoPicker({
         </ul>
       )}
       <p className="mt-2 text-xs text-muted">
-        Iki {MAX_PHOTOS} nuotraukų. Vietos duomenys (GPS) iš nuotraukų pašalinami automatiškai.
+        {t.photos.hint(MAX_PHOTOS)}
       </p>
     </div>
   );

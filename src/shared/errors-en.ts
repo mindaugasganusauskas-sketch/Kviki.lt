@@ -1,0 +1,107 @@
+// Serverio klaidų ir validacijos pranešimų vertimai į anglų kalbą.
+// Raktas – tikslus lietuviškas pranešimas, kurį grąžina serveris.
+import type { Locale } from "./locale";
+
+const EN: Record<string, string> = {
+  // Paskyra ir prisijungimas
+  "Prisijunkite, kad galėtumėte tęsti": "Please log in to continue",
+  "Neteisingas el. paštas arba slaptažodis": "Incorrect email or password",
+  "Neteisingas slaptažodis": "Incorrect password",
+  "Neteisingas dabartinis slaptažodis": "Incorrect current password",
+  "Šis el. pašto adresas jau užregistruotas. Prisijunkite.": "This email address is already registered. Please log in.",
+  "Per daug bandymų. Pabandykite vėliau.": "Too many attempts. Please try again later.",
+  "Per daug bandymų. Palaukite 15 minučių.": "Too many attempts. Please wait 15 minutes.",
+  "Demonstracija išjungta": "The demo is turned off",
+  "Demonstracinės paskyros ištrinti negalima": "The demo account cannot be deleted",
+  "Demonstracinės paskyros slaptažodžio keisti negalima": "The demo account's password cannot be changed",
+  "Turite aktyvių užsakymų. Pirmiausia juos užbaikite arba atšaukite, kad kita šalis žinotų.":
+    "You have active orders. Complete or cancel them first so the other party knows.",
+  "Pirmiausia užpildykite teikėjo profilį": "Please complete your provider profile first",
+  "Užklausa atmesta": "Request rejected",
+  // Užklausos
+  "Užklausa nerasta": "Request not found",
+  "Įrašas nerastas arba jums nepasiekiamas": "Not found or not available to you",
+  "Keisti galima tik atvirą užklausą": "Only an open request can be changed",
+  "Dėl šios užklausos jau susitarta. Atšaukite užsakymą jo kortelėje.": "This request is already agreed. Cancel the order on its card.",
+  "Užklausa jau užbaigta": "The request is already completed",
+  "Šios užklausos atnaujinti nebegalima": "This request can no longer be renewed",
+  "Pasirinktas laikas jau praėjo. Pasirinkite vėlesnį.": "The chosen time has already passed. Please choose a later one.",
+  "Periodinio darbo pradžia negali būti praeityje": "The start of a recurring job cannot be in the past",
+  "Per daug pakeitimų per valandą. Pabandykite vėliau.": "Too many changes per hour. Please try again later.",
+  "Per parą galima paskelbti iki 10 užklausų. Pabandykite rytoj.": "You can post up to 10 requests per day. Please try again tomorrow.",
+  "Neteisingas užklausos formatas": "Invalid request format",
+  "Neteisingas užklausos identifikatorius": "Invalid request ID",
+  // Nuotraukos
+  "Galima pridėti iki 6 nuotraukų": "You can add up to 6 photos",
+  "Nuotrauka per didelė (daugiausia 15 MB)": "The photo is too large (maximum 15 MB)",
+  "Galima įkelti tik nuotraukas": "Only photos can be uploaded",
+  "Nepavyko perskaityti nuotraukos. Naudokite JPG, PNG arba WEBP.": "Could not read the photo. Please use JPG, PNG or WEBP.",
+  "Demonstracijoje nuotraukų įkelti negalima": "Photos cannot be uploaded in the demo",
+  // Pasiūlymai
+  "Pasiūlymas nerastas": "Offer not found",
+  "Negalite siūlyti savo užklausai": "You cannot make an offer on your own request",
+  "Užklausa jau nebeaktyvi": "The request is no longer active",
+  "Užklausa nebeaktyvi": "The request is no longer active",
+  "Šio pasiūlymo keisti nebegalima": "This offer can no longer be changed",
+  "Pasiūlymas jau priimtas": "The offer has already been accepted",
+  "Pasiūlymas jau neaktyvus": "The offer is no longer active",
+  "Pradžios laikas jau praėjo. Pasirinkite vėlesnį.": "The start time has already passed. Please choose a later one.",
+  "Pradžia per toli ateityje": "The start is too far in the future",
+  "Per daug pasiūlymų per valandą. Pabandykite vėliau.": "Too many offers per hour. Please try again later.",
+  "Teikėjas atsiėmė šį pasiūlymą": "The provider has withdrawn this offer",
+  "Teikėjas ką tik pakeitė pasiūlymą. Peržiūrėkite naujas sąlygas ir pasirinkite iš naujo.":
+    "The provider has just changed the offer. Review the new terms and choose again.",
+  "Po jūsų užklausos pakeitimų teikėjas dar nepatvirtino šios kainos.": "The provider has not yet reconfirmed this price after your changes.",
+  "Dėl šios užklausos jau susitarta su kitu teikėju": "This request is already agreed with another provider",
+  // Užsakymai ir vizitai
+  "Užsakymas nerastas": "Order not found",
+  "Vizitas nerastas": "Visit not found",
+  "Užsakymas jau nebeaktyvus": "The order is no longer active",
+  "Užsakymas nebeaktyvus": "The order is no longer active",
+  "Atliktu darbą pažymi teikėjas": "The provider marks the job as done",
+  "Šio vizito pažymėti nebegalima": "This visit can no longer be marked",
+  "Rezultatą patvirtina klientas": "The client confirms the result",
+  "Teikėjas dar nepažymėjo darbo atliktu": "The provider has not marked the job as done yet",
+  "Problemą pažymi klientas": "The client reports problems",
+  "Problemą galima pažymėti, kai teikėjas pažymi darbą atliktu": "A problem can be reported once the provider marks the job as done",
+  "Atšaukti galima tik suplanuotą vizitą": "Only a scheduled visit can be cancelled",
+  // Validacija
+  "Patikrinkite įvestus duomenis": "Please check the details you entered",
+  "Įvyko klaida. Bandykite dar kartą.": "Something went wrong. Please try again.",
+  "Neteisinga data": "Invalid date",
+  "Neteisingas laikas": "Invalid time",
+  "Neteisingas el. pašto adresas": "Invalid email address",
+  "Įrašykite vardą": "Enter your name",
+  "Įrašykite slaptažodį": "Enter your password",
+  "Slaptažodis turi būti bent 8 simbolių": "The password must be at least 8 characters",
+  "Naujas slaptažodis turi būti bent 8 simbolių": "The new password must be at least 8 characters",
+  "Įrašykite dabartinį slaptažodį": "Enter your current password",
+  "Pažymėkite, kad sutinkate su taisyklėmis ir privatumo politika": "Please tick that you accept the terms and the privacy policy",
+  "Įrašykite telefono numerį, pvz. +370 600 00000": "Enter a phone number, e.g. +370 600 00000",
+  "Pasirinkite veiklos formą": "Choose your business form",
+  "Įrašykite vardą arba įmonės pavadinimą": "Enter your name or company name",
+  "Įmonės kodas – 9 skaitmenys": "A company code has 9 digits",
+  "Pasirinkite bent vieną paslaugą": "Choose at least one service",
+  "Pasirinkite bent vieną savivaldybę": "Choose at least one municipality",
+  "Nežinoma savivaldybė": "Unknown municipality",
+  "Pasirinkite darbo rūšį": "Choose the type of job",
+  "Pasirinkite savivaldybę": "Choose a municipality",
+  "Įrašykite gyvenvietę ar vietovę": "Enter the village or locality",
+  "Įrašykite tikslų adresą ar kaip atvykti": "Enter the exact address or how to get there",
+  "Plotas turi būti teigiamas": "The area must be positive",
+  "Patikslinkite darbo apimtį": "Please specify the job scope",
+  "Trumpai aprašykite, ką reikės padaryti": "Briefly describe what needs to be done",
+  "Pabaiga turi būti vėliau nei pradžia": "The end must be later than the start",
+  "Įrašykite kainą": "Enter the price",
+  "Kaina turi būti bent 1 €": "The price must be at least €1",
+  "Per didelė kaina": "The price is too high",
+  "Pasirinkite pradžios laiką": "Choose the start time",
+  "Parašykite, kas įskaičiuota": "Describe what's included",
+  "Trumpai aprašykite problemą": "Briefly describe the problem",
+};
+
+/** Išverčia serverio pranešimą į pasirinktą kalbą (jei vertimo nėra – grąžina originalą). */
+export function translateError(message: string, locale: Locale): string {
+  if (locale !== "en") return message;
+  return EN[message] ?? message;
+}

@@ -93,8 +93,7 @@ async function notifyNearbyProviders(tx: Tx, r: RequestRow, excludeIds: string[]
     ids.map((userId) => ({
       userId,
       type: "new_job",
-      title: `Naujas darbas šalia: ${headline}`,
-      body: `${r.locality}, ${municipalityLabel(r.municipality)}`,
+      params: { category: r.category, details: r.details, locality: r.locality, municipality: r.municipality },
       link: `/darbai-salia/${r.id}`,
       dedupeKey: `new_job:${r.id}:v${r.version}:${userId}`,
       email: true,
@@ -258,6 +257,7 @@ export async function listMyRequests(actor: Actor): Promise<RequestListItem[]> {
       id: r.id,
       headline: pub.headline,
       category: pub.category,
+      details: r.details,
       municipalityLabel: pub.municipalityLabel,
       locality: r.locality,
       timing: pub.timing,
@@ -409,8 +409,7 @@ export async function updateRequest(
         providerIds.map((userId) => ({
           userId,
           type: "request_changed",
-          title: `Klientas pakeitė užklausą: ${headline}`,
-          body: "Peržiūrėkite pakeitimus ir patvirtinkite savo kainą iš naujo.",
+          params: { category: cols.category, details: cols.details },
           link: `/darbai-salia/${id}`,
           dedupeKey: `request_changed:${id}:v${version}:${userId}`,
           email: true,
@@ -446,7 +445,7 @@ export async function cancelRequest(actor: Actor, id: string): Promise<void> {
       providerIds.map((userId) => ({
         userId,
         type: "request_cancelled",
-        title: `Klientas atšaukė užklausą: ${headline}`,
+        params: { category: r.category, details: r.details },
         link: `/darbai-salia/${id}`,
         dedupeKey: `request_cancelled:${id}:${userId}`,
       })),
@@ -483,8 +482,7 @@ export async function reopenRequest(actor: Actor, id: string): Promise<void> {
       revived.map(({ providerId }) => ({
         userId: providerId,
         type: "request_reopened",
-        title: `Užklausa vėl atvira: ${headline}`,
-        body: "Klientas ieško kito teikėjo. Patvirtinkite savo pasiūlymą, jei jis vis dar galioja.",
+        params: { category: r.category, details: r.details },
         link: `/darbai-salia/${id}`,
         dedupeKey: `request_reopened:${id}:v${version}:${providerId}`,
         email: true,

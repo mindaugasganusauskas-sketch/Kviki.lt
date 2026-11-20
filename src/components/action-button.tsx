@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { api } from "@/lib/api-client";
 import { Alert, Button, Textarea } from "./ui";
+import { useI18n } from "@/i18n/client";
 
 /**
  * Mygtukas, kuris iškviečia API veiksmą ir atnaujina puslapį.
@@ -32,6 +33,7 @@ export function ActionButton({
   className?: string;
   body?: Record<string, unknown>;
 }) {
+  const { t } = useI18n();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
@@ -83,10 +85,10 @@ export function ActionButton({
           {error && <Alert tone="error">{error}</Alert>}
           <div className="flex flex-wrap gap-2">
             <Button variant={variant === "danger" ? "danger" : "primary"} size="sm" onClick={run} loading={pending} disabled={reasonRequired && reason.trim().length < 3}>
-              Patvirtinti
+              {t.action.confirm}
             </Button>
             <Button variant="ghost" size="sm" onClick={() => setOpen(false)} disabled={pending}>
-              Atšaukti
+              {t.action.cancel}
             </Button>
           </div>
         </div>

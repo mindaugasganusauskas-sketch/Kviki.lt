@@ -17,6 +17,8 @@ import {
 import { api } from "@/lib/api-client";
 import { cx } from "./ui";
 import type { Mode } from "@/shared/types";
+import { useI18n } from "@/i18n/client";
+import type { Dict } from "@/i18n";
 
 interface NavItem {
   href: string;
@@ -26,25 +28,25 @@ interface NavItem {
   badge?: boolean;
 }
 
-function itemsFor(state: "guest" | Mode): NavItem[] {
+function itemsFor(state: "guest" | Mode, t: Dict): NavItem[] {
   if (state === "guest")
     return [
-      { href: "/", label: "Pradžia", icon: House },
-      { href: "/nauja-uzklausa", label: "Nauja užklausa", icon: Plus, primary: true },
-      { href: "/prisijungti", label: "Prisijungti", icon: LogIn },
+      { href: "/", label: t.nav.home, icon: House },
+      { href: "/nauja-uzklausa", label: t.nav.newRequest, icon: Plus, primary: true },
+      { href: "/prisijungti", label: t.nav.login, icon: LogIn },
     ];
   if (state === "provider")
     return [
-      { href: "/darbai-salia", label: "Darbai šalia", icon: MapPin },
-      { href: "/mano-darbai", label: "Mano darbai", icon: ListChecks },
-      { href: "/pranesimai", label: "Pranešimai", icon: Bell, badge: true },
-      { href: "/paskyra", label: "Paskyra", icon: User },
+      { href: "/darbai-salia", label: t.nav.nearby, icon: MapPin },
+      { href: "/mano-darbai", label: t.nav.myJobs, icon: ListChecks },
+      { href: "/pranesimai", label: t.nav.notifications, icon: Bell, badge: true },
+      { href: "/paskyra", label: t.nav.account, icon: User },
     ];
   return [
-    { href: "/nauja-uzklausa", label: "Nauja užklausa", icon: Plus, primary: true },
-    { href: "/mano-uzklausos", label: "Mano užklausos", icon: ClipboardList },
-    { href: "/pranesimai", label: "Pranešimai", icon: Bell, badge: true },
-    { href: "/paskyra", label: "Paskyra", icon: User },
+    { href: "/nauja-uzklausa", label: t.nav.newRequest, icon: Plus, primary: true },
+    { href: "/mano-uzklausos", label: t.nav.myRequests, icon: ClipboardList },
+    { href: "/pranesimai", label: t.nav.notifications, icon: Bell, badge: true },
+    { href: "/paskyra", label: t.nav.account, icon: User },
   ];
 }
 
@@ -81,11 +83,12 @@ function useUnread(initial: number, enabled: boolean) {
 }
 
 export function TopNav({ state, unread }: { state: "guest" | Mode; unread: number }) {
+  const { t } = useI18n();
   const pathname = usePathname();
   const count = useUnread(unread, state !== "guest");
   return (
-    <nav className="hidden items-center gap-1 md:flex" aria-label="Pagrindinė navigacija">
-      {itemsFor(state).map((it) => {
+    <nav className="hidden items-center gap-1 md:flex" aria-label={t.nav.main}>
+      {itemsFor(state, t).map((it) => {
         const active = isActive(pathname, it.href);
         return (
           <Link
@@ -103,7 +106,7 @@ export function TopNav({ state, unread }: { state: "guest" | Mode; unread: numbe
             <it.icon className="size-4" aria-hidden />
             {it.label}
             {it.badge && count > 0 && (
-              <span className="ml-0.5 rounded-full bg-berry-500 px-1.5 text-xs font-bold text-white" aria-label={`${count} neperskaityti`}>
+              <span className="ml-0.5 rounded-full bg-berry-500 px-1.5 text-xs font-bold text-white" aria-label={t.nav.unread(count)}>
                 {count}
               </span>
             )}
@@ -115,13 +118,14 @@ export function TopNav({ state, unread }: { state: "guest" | Mode; unread: numbe
 }
 
 export function BottomNav({ state, unread }: { state: "guest" | Mode; unread: number }) {
+  const { t } = useI18n();
   const pathname = usePathname();
   const count = useUnread(unread, state !== "guest");
-  const items = itemsFor(state);
+  const items = itemsFor(state, t);
   return (
     <nav
       className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white/95 backdrop-blur md:hidden"
-      aria-label="Apatinė navigacija"
+      aria-label={t.nav.bottom}
     >
       <ul className={cx("mx-auto grid max-w-lg", items.length === 3 ? "grid-cols-3" : "grid-cols-4")}>
         {items.map((it) => {
@@ -161,6 +165,7 @@ export function BottomNav({ state, unread }: { state: "guest" | Mode; unread: nu
 
 /** Kliento ir teikėjo režimų perjungimas. Ankstesni užsakymai nesikeičia. */
 export function ModeSwitch({ mode, className }: { mode: Mode; className?: string }) {
+  const { t } = useI18n();
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -183,11 +188,11 @@ export function ModeSwitch({ mode, className }: { mode: Mode; className?: string
           })
         }
         className="inline-flex h-9 items-center gap-1.5 rounded-full border border-line bg-white px-3 text-xs font-semibold text-stone-700 hover:bg-stone-50 disabled:opacity-50"
-        title="Perjungti režimą"
+        title={t.nav.switchMode}
       >
         <ArrowLeftRight className="size-3.5" aria-hidden />
-        {mode === "client" ? "Klientas" : "Teikėjas"}
-        <span className="text-muted">→ {next === "client" ? "klientas" : "teikėjas"}</span>
+        {mode === "client" ? t.nav.modeClient : t.nav.modeProvider}
+        <span className="hidden text-muted sm:inline">{next === "client" ? t.nav.toClient : t.nav.toProvider}</span>
       </button>
       {error && <p className="mt-1 text-xs text-red-700">{error}</p>}
     </div>

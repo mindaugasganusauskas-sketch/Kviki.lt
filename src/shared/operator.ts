@@ -8,10 +8,12 @@ export const OPERATOR = {
   address: null as string | null,
   email: "info@kviki.lt",
   updated: "2026 m. lapkričio 20 d.",
+  updatedEn: "20 November 2026",
 } as const;
 
 /** „UAB Kviki (įmonės kodas …, adresas …)“ – rodomi tik žinomi rekvizitai. */
-export function operatorLine(): string {
-  const parts = [OPERATOR.code ? `įmonės kodas ${OPERATOR.code}` : null, OPERATOR.address].filter(Boolean);
-  return parts.length ? `${OPERATOR.name}, ${parts.join(", ")}` : OPERATOR.name;
+export function operatorLine(locale: "lt" | "en" = "lt"): string {
+  const name = locale === "en" ? OPERATOR.name.replace("(steigiama)", "(being established)") : OPERATOR.name;
+  const parts = [OPERATOR.code ? `${locale === "en" ? "company code" : "įmonės kodas"} ${OPERATOR.code}` : null, OPERATOR.address].filter(Boolean);
+  return parts.length ? `${name}, ${parts.join(", ")}` : name;
 }

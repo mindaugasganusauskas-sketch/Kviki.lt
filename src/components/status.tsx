@@ -1,67 +1,68 @@
+"use client";
+
+import { useI18n } from "@/i18n/client";
 import type { AgreementStatus, OfferStatus, RequestStatus, VisitStatus } from "@/shared/types";
 import { Badge } from "./ui";
 
 export function RequestStatusBadge({ status, offerCount }: { status: RequestStatus; offerCount?: number }) {
+  const { t } = useI18n();
   switch (status) {
     case "open":
-      return offerCount && offerCount > 0 ? (
-        <Badge tone="amber">
-          {offerCount} {offerCount === 1 ? "pasiūlymas" : offerCount < 10 ? "pasiūlymai" : "pasiūlymų"}
-        </Badge>
-      ) : (
-        <Badge tone="blue">Laukia pasiūlymų</Badge>
-      );
+      return offerCount && offerCount > 0 ? <Badge tone="amber">{t.status.offers(offerCount)}</Badge> : <Badge tone="blue">{t.status.waitingOffers}</Badge>;
     case "agreed":
-      return <Badge tone="green">Sutarta</Badge>;
+      return <Badge tone="green">{t.status.agreed}</Badge>;
     case "on_hold":
-      return <Badge tone="amber">Laukia jūsų sprendimo</Badge>;
+      return <Badge tone="amber">{t.status.onHold}</Badge>;
     case "cancelled":
-      return <Badge>Atšaukta</Badge>;
+      return <Badge>{t.status.cancelled}</Badge>;
     case "completed":
-      return <Badge tone="green">Užbaigta</Badge>;
+      return <Badge tone="green">{t.status.completed}</Badge>;
     case "expired":
-      return <Badge>Nebegalioja</Badge>;
+      return <Badge>{t.status.expired}</Badge>;
   }
 }
 
 export function AgreementStatusBadge({ status }: { status: AgreementStatus }) {
+  const { t } = useI18n();
   switch (status) {
     case "active":
-      return <Badge tone="green">Sutarta</Badge>;
+      return <Badge tone="green">{t.status.agreed}</Badge>;
     case "completed":
-      return <Badge tone="green">Užbaigta</Badge>;
+      return <Badge tone="green">{t.status.completed}</Badge>;
     case "cancelled":
-      return <Badge tone="red">Atšaukta</Badge>;
+      return <Badge tone="red">{t.status.cancelled}</Badge>;
     case "ended":
-      return <Badge>Serija nutraukta</Badge>;
+      return <Badge>{t.status.seriesEnded}</Badge>;
   }
 }
 
 export function VisitStatusBadge({ status }: { status: VisitStatus }) {
+  const { t } = useI18n();
   switch (status) {
     case "scheduled":
-      return <Badge tone="blue">Suplanuota</Badge>;
+      return <Badge tone="blue">{t.status.scheduled}</Badge>;
     case "done":
-      return <Badge tone="amber">Laukia kliento patvirtinimo</Badge>;
+      return <Badge tone="amber">{t.status.awaitingClient}</Badge>;
     case "confirmed":
-      return <Badge tone="green">Atlikta</Badge>;
+      return <Badge tone="green">{t.status.done}</Badge>;
     case "problem":
-      return <Badge tone="red">Pažymėta problema</Badge>;
+      return <Badge tone="red">{t.status.problem}</Badge>;
     case "cancelled":
-      return <Badge>Atšaukta</Badge>;
+      return <Badge>{t.status.cancelled}</Badge>;
   }
 }
 
 export function OfferStatusBadge({ status, needsReconfirmation }: { status: OfferStatus; needsReconfirmation?: boolean }) {
-  if (status === "active" && needsReconfirmation) return <Badge tone="amber">Reikia patvirtinti iš naujo</Badge>;
+  const { t } = useI18n();
+  if (status === "active" && needsReconfirmation) return <Badge tone="amber">{t.status.reconfirm}</Badge>;
   switch (status) {
     case "active":
-      return <Badge tone="blue">Laukia kliento sprendimo</Badge>;
+      return <Badge tone="blue">{t.status.awaitingDecision}</Badge>;
     case "accepted":
-      return <Badge tone="green">Priimtas</Badge>;
+      return <Badge tone="green">{t.status.accepted}</Badge>;
     case "withdrawn":
-      return <Badge>Atsiimtas</Badge>;
+      return <Badge>{t.status.withdrawn}</Badge>;
     case "closed":
-      return <Badge>Užklausa baigėsi</Badge>;
+      return <Badge>{t.status.closed}</Badge>;
   }
 }

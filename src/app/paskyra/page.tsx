@@ -9,23 +9,28 @@ import { ModeSwitch } from "@/components/nav";
 import { ButtonLink, Card, DefinitionRow, PageHeader } from "@/components/ui";
 import Link from "next/link";
 import { AccountForm, ChangePassword, DeleteAccount, LogoutButton } from "./account-form";
+import { getI18n } from "@/i18n/server";
 
-export const metadata: Metadata = { title: "Paskyra" };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getI18n()).t.titles.account };
+}
 
 export default async function AccountPage() {
   const actor = await requirePageActor("/paskyra");
   const profile = await getProviderProfile(actor.id);
+  const { locale, t } = await getI18n();
+  const c = t.account;
   return (
     <div className="mx-auto max-w-2xl space-y-5">
-      <PageHeader title="Paskyra" subtitle={actor.email} />
+      <PageHeader title={t.titles.account} subtitle={actor.email} />
       <Card>
-        <h2 className="mb-4 text-lg font-bold">Jūsų duomenys</h2>
+        <h2 className="mb-4 text-lg font-bold">{c.yourData}</h2>
         <AccountForm name={actor.name} phone={actor.phone ?? ""} />
       </Card>
 
       {!actor.isDemo && (
         <Card>
-          <h2 className="mb-4 text-lg font-bold">Slaptažodis</h2>
+          <h2 className="mb-4 text-lg font-bold">{c.password}</h2>
           <ChangePassword />
         </Card>
       )}
@@ -33,32 +38,32 @@ export default async function AccountPage() {
       <Card>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg font-bold">Teikėjo profilis</h2>
-            <p className="mt-1 text-sm text-muted">Viena paskyra gali ir užsakyti darbus, ir juos atlikti. Perjungus režimą ankstesni užsakymai nesikeičia.</p>
+            <h2 className="text-lg font-bold">{c.providerProfile}</h2>
+            <p className="mt-1 text-sm text-muted">{c.providerProfileText}</p>
           </div>
           {profile && <ModeSwitch mode={actor.mode} />}
         </div>
         {profile ? (
           <>
             <dl className="mt-3 divide-y divide-line">
-              <DefinitionRow label="Pavadinimas">
+              <DefinitionRow label={c.displayName}>
                 <span className="inline-flex items-center gap-1.5">
                   {profile.businessForm === "company" ? <Building2 className="size-4" aria-hidden /> : <User className="size-4" aria-hidden />}
                   {profile.displayName}
-                  {profile.verified && <BadgeCheck className="size-4 text-brand-600" aria-label="Patikrinta" />}
+                  {profile.verified && <BadgeCheck className="size-4 text-brand-600" aria-label={c.verified} />}
                 </span>
               </DefinitionRow>
-              <DefinitionRow label="Veiklos forma">{businessFormLabel(profile.businessForm)}</DefinitionRow>
-              <DefinitionRow label="Paslaugos">{profile.categories.map(categoryLabel).join(", ")}</DefinitionRow>
-              <DefinitionRow label="Savivaldybės">{profile.municipalities.map(municipalityLabel).join(", ")}</DefinitionRow>
+              <DefinitionRow label={c.businessForm}>{businessFormLabel(profile.businessForm, locale)}</DefinitionRow>
+              <DefinitionRow label={c.services}>{profile.categories.map((x) => categoryLabel(x, locale)).join(", ")}</DefinitionRow>
+              <DefinitionRow label={c.municipalities}>{profile.municipalities.map(municipalityLabel).join(", ")}</DefinitionRow>
             </dl>
             <ButtonLink href="/paskyra/teikejas" variant="outline" className="mt-3">
-              Redaguoti teikėjo profilį
+              {c.editProvider}
             </ButtonLink>
           </>
         ) : (
           <ButtonLink href="/paskyra/teikejas" variant="secondary" className="mt-4">
-            Tapti teikėju
+            {c.become}
           </ButtonLink>
         )}
       </Card>
@@ -66,10 +71,10 @@ export default async function AccountPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="flex gap-4 text-sm">
           <Link href="/taisykles" className="font-semibold text-brand-700 hover:underline">
-            Taisyklės
+            {t.common.terms}
           </Link>
           <Link href="/privatumas" className="font-semibold text-brand-700 hover:underline">
-            Privatumo politika
+            {t.common.privacyPolicy}
           </Link>
         </p>
         <LogoutButton />
@@ -77,9 +82,9 @@ export default async function AccountPage() {
 
       {!actor.isDemo && (
         <Card className="border-red-200">
-          <h2 className="text-lg font-bold">Paskyros ištrynimas</h2>
+          <h2 className="text-lg font-bold">{c.deleteTitle}</h2>
           <p className="mb-4 mt-1 text-sm text-muted">
-            Galite ištrinti paskyrą ir asmens duomenis. Jei turite aktyvių užsakymų, pirmiausia juos užbaikite arba atšaukite.
+            {c.deleteText}
           </p>
           <DeleteAccount />
         </Card>

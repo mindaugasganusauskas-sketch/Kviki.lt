@@ -137,6 +137,7 @@ export async function resetDemo(): Promise<{ clientId: string; tomasId: string; 
         type: "new_offer",
         title: "Naujas pasiūlymas: 90 €",
         body: "Tomas (demo) – Žolės pjovimas · apie 40 a",
+        params: { category: "mowing", details: req.details, priceCents: 9000, perVisit: false, providerName: "Tomas (demo)" },
         link: `/uzklausos/${req.id}`,
       },
       {
@@ -144,6 +145,7 @@ export async function resetDemo(): Promise<{ clientId: string; tomasId: string; 
         type: "new_offer",
         title: "Naujas pasiūlymas: 75 €",
         body: "Žalias kiemas, UAB (demo) – Žolės pjovimas · apie 40 a",
+        params: { category: "mowing", details: req.details, priceCents: 7500, perVisit: false, providerName: "Žalias kiemas, UAB (demo)" },
         link: `/uzklausos/${req.id}`,
       },
     ]);

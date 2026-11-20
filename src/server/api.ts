@@ -1,6 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { AppError } from "@/server/errors";
 import { requireActor, type Actor } from "@/server/auth/session";
+import { getLocale } from "@/i18n/server";
+import { translateError } from "@/shared/errors-en";
+import type { Locale } from "@/shared/locale";
 
 const UNSAFE = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
@@ -34,16 +37,23 @@ export function clientIp(req: NextRequest): string {
   );
 }
 
-export function errorResponse(err: unknown): NextResponse {
+/** Klaidos atsakymas naudotojo kalba (pagal slapuką „kviki_lang“). */
+export function errorResponse(err: unknown, locale: Locale = "lt"): NextResponse {
   if (err instanceof AppError) {
     return NextResponse.json(
-      { error: { code: err.code, message: err.message, details: err.code === "VALIDATION" ? undefined : err.details } },
+      {
+        error: {
+          code: err.code,
+          message: translateError(err.message, locale),
+          details: err.code === "VALIDATION" ? undefined : err.details,
+        },
+      },
       { status: err.status },
     );
   }
   console.error(err);
   return NextResponse.json(
-    { error: { code: "INTERNAL", message: "Įvyko klaida. Bandykite dar kartą." } },
+    { error: { code: "INTERNAL", message: translateError("Įvyko klaida. Bandykite dar kartą.", locale) } },
     { status: 500 },
   );
 }
@@ -61,7 +71,7 @@ export function route<P = Record<string, string>>(
       if (result instanceof Response) return result;
       return NextResponse.json(result ?? { ok: true }, { headers: { "Cache-Control": "no-store" } });
     } catch (err) {
-      return errorResponse(err);
+      return errorResponse(err, await getLocale().catch(() => "lt" as const));
     }
   };
 }

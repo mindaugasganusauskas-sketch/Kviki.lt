@@ -15,6 +15,13 @@
       "when": 1795197941486,
       "tag": "0001_paskyros_ir_galiojimas",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795202918892,
+      "tag": "0002_kalbos",
+      "breakpoints": true
     }
   ]
 }

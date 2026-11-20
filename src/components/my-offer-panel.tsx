@@ -8,6 +8,7 @@ import type { OfferDTO } from "@/shared/types";
 import { OfferForm } from "./offer-form";
 import { OfferStatusBadge } from "./status";
 import { Alert, Button, Card } from "./ui";
+import { useI18n } from "@/i18n/client";
 
 /** Teikėjo pasiūlymas užklausos puslapyje: pateikti, keisti, atsiimti ar patvirtinti po kliento pakeitimų. */
 export function MyOfferPanel({
@@ -23,6 +24,8 @@ export function MyOfferPanel({
   open: boolean;
   suggestedStartDate?: string | null;
 }) {
+  const { t, locale } = useI18n();
+  const f = t.offerForm;
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [pending, setPending] = useState<"withdraw" | "confirm" | null>(null);
@@ -64,35 +67,35 @@ export function MyOfferPanel({
   return (
     <Card>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-lg font-bold">{offer && offer.status !== "withdrawn" ? "Jūsų pasiūlymas" : "Pateikti pasiūlymą"}</h2>
+        <h2 className="text-lg font-bold">{offer && offer.status !== "withdrawn" ? f.yourOffer : f.makeOffer}</h2>
         {offer && <OfferStatusBadge status={offer.status} needsReconfirmation={offer.needsReconfirmation} />}
       </div>
 
       {offer && offer.status === "active" && offer.needsReconfirmation && !editing && (
-        <Alert tone="warning" className="mb-4" title="Klientas pakeitė užklausą">
-          Peržiūrėkite pakeitimus aukščiau. Kol nepatvirtinsite kainos iš naujo, klientas negalės priimti jūsų pasiūlymo.
+        <Alert tone="warning" className="mb-4" title={f.changedTitle}>
+          {f.changedText}
         </Alert>
       )}
 
       {offer && offer.status !== "withdrawn" && !editing && (
         <dl className="grid grid-cols-2 gap-3 rounded-xl bg-paper p-4 sm:grid-cols-3">
           <div>
-            <dt className="text-xs text-muted">{perVisit ? "Kaina už vizitą" : "Kaina"}</dt>
-            <dd className="text-2xl font-extrabold">{formatPrice(offer.priceCents)}</dd>
+            <dt className="text-xs text-muted">{perVisit ? f.pricePerVisitShort : f.price}</dt>
+            <dd className="text-2xl font-extrabold">{formatPrice(offer.priceCents, locale)}</dd>
           </div>
           <div>
-            <dt className="text-xs text-muted">{perVisit ? "Pirmas vizitas" : "Pradžia"}</dt>
-            <dd className="font-bold">{formatDateTime(offer.startAt)}</dd>
+            <dt className="text-xs text-muted">{perVisit ? f.firstVisit : t.offers.start}</dt>
+            <dd className="font-bold">{formatDateTime(offer.startAt, locale)}</dd>
           </div>
           <div className="col-span-2 sm:col-span-1">
-            <dt className="text-xs text-muted">Kas įskaičiuota</dt>
+            <dt className="text-xs text-muted">{f.included}</dt>
             <dd className="font-medium">{offer.included}</dd>
           </div>
         </dl>
       )}
 
       {offer && offer.status === "withdrawn" && !editing && (
-        <p className="mb-4 text-sm text-muted">Pasiūlymą atsiėmėte. Galite pateikti naują.</p>
+        <p className="mb-4 text-sm text-muted">{f.withdrawnText}</p>
       )}
 
       {error && <Alert tone="error" className="mt-3">{error}</Alert>}
@@ -101,14 +104,14 @@ export function MyOfferPanel({
         <div className="mt-4 flex flex-wrap gap-2">
           {offer.needsReconfirmation && (
             <Button onClick={reconfirm} loading={pending === "confirm"}>
-              Patvirtinti tą pačią kainą
+              {f.reconfirm}
             </Button>
           )}
           <Button variant="outline" onClick={() => setEditing(true)}>
-            Keisti
+            {t.common.change}
           </Button>
           <Button variant="danger" onClick={withdraw} loading={pending === "withdraw"}>
-            Atsiimti
+            {f.withdraw}
           </Button>
         </div>
       )}

@@ -9,8 +9,8 @@ import { parseEurToCents } from "@/shared/schemas";
 import { addDaysToKey, vilniusDateKey, vilniusTimeKey, vilniusToDate } from "@/shared/time";
 import type { OfferDTO } from "@/shared/types";
 import { Alert, Button, Field, Input, Textarea, cx } from "./ui";
+import { useI18n } from "@/i18n/client";
 
-const INCLUDED_CHIPS = ["Atvykimas", "Darbas savo technika", "Žolės surinkimas", "Atliekų išvežimas", "Šakų išvežimas", "Kuras"];
 
 function defaultStart(): { date: string; time: string } {
   const now = new Date();
@@ -33,6 +33,9 @@ export function OfferForm({
   onDone?: () => void;
   suggestedStartDate?: string | null;
 }) {
+  const { t, locale } = useI18n();
+  const f = t.offerForm;
+  const INCLUDED_CHIPS = f.chips;
   const router = useRouter();
   const initial = existing
     ? { date: vilniusDateKey(new Date(existing.startAt)), time: vilniusTimeKey(new Date(existing.startAt)) }
@@ -52,11 +55,11 @@ export function OfferForm({
     e.preventDefault();
     setError(null);
     if (cents === null || cents < 100) {
-      setError("Įrašykite kainą eurais, pvz. 75");
+      setError(f.errPrice);
       return;
     }
     if (!date || !time) {
-      setError("Pasirinkite pradžios datą ir laiką");
+      setError(f.errStart);
       return;
     }
     setPending(true);
@@ -82,9 +85,9 @@ export function OfferForm({
   return (
     <form onSubmit={submit} className="space-y-4" noValidate>
       <Field
-        label={perVisit ? "Kaina už vieną vizitą" : "Galutinė kaina klientui"}
+        label={perVisit ? f.pricePerVisit : f.priceFinal}
         htmlFor="o-price"
-        hint={perVisit ? "Klientas mokės šią sumą už kiekvieną vizitą." : "Visa suma, kurią sumokės klientas už sutartą darbą."}
+        hint={perVisit ? f.pricePerVisitHint : f.priceFinalHint}
       >
         <div className="relative w-44">
           <Input
@@ -99,14 +102,14 @@ export function OfferForm({
         </div>
       </Field>
       <div className="grid grid-cols-2 gap-3">
-        <Field label={perVisit ? "Pirmas vizitas" : "Galiu pradėti"} htmlFor="o-date">
+        <Field label={perVisit ? f.firstVisit : f.canStart} htmlFor="o-date">
           <Input id="o-date" type="date" min={today} value={date} onChange={(e) => setDate(e.target.value)} />
         </Field>
-        <Field label="Laikas" htmlFor="o-time">
+        <Field label={f.time} htmlFor="o-time">
           <Input id="o-time" type="time" value={time} onChange={(e) => setTime(e.target.value)} />
         </Field>
       </div>
-      <Field label="Kas įskaičiuota" htmlFor="o-incl">
+      <Field label={f.included} htmlFor="o-incl">
         <div className="mb-2 flex flex-wrap gap-1.5">
           {INCLUDED_CHIPS.map((chip) => {
             const on = included.toLowerCase().includes(chip.toLowerCase());
@@ -125,23 +128,23 @@ export function OfferForm({
             );
           })}
         </div>
-        <Textarea id="o-incl" rows={2} value={included} onChange={(e) => setIncluded(e.target.value)} placeholder="Pvz.: Atvykimas ir pjovimas savo technika" />
+        <Textarea id="o-incl" rows={2} value={included} onChange={(e) => setIncluded(e.target.value)} placeholder={f.includedPlaceholder} />
       </Field>
       {cents !== null && date && time && (
         <p className="rounded-xl bg-paper p-3 text-sm">
-          Klientas matys: <strong>{formatPrice(cents)}{perVisit ? " už kartą" : ""}</strong>, pradžia{" "}
-          <strong>{formatDateTime(vilniusToDate(date, time))}</strong>
+          {f.preview} <strong>{formatPrice(cents, locale)}{perVisit ? f.perVisitSuffix : ""}</strong>, {f.previewStart}{" "}
+          <strong>{formatDateTime(vilniusToDate(date, time), locale)}</strong>
         </p>
       )}
       {error && <Alert tone="error">{error}</Alert>}
       <div className="flex flex-wrap gap-2">
         <Button type="submit" size="lg" loading={pending} className="flex-1 sm:flex-none">
           <Send className="size-5" aria-hidden />
-          {existing && existing.status === "active" ? "Išsaugoti pasiūlymą" : "Pateikti pasiūlymą"}
+          {existing && existing.status === "active" ? f.save : f.submit}
         </Button>
         {onDone && existing && (
           <Button type="button" variant="ghost" size="lg" onClick={onDone}>
-            Atšaukti
+            {t.common.cancel}
           </Button>
         )}
       </div>

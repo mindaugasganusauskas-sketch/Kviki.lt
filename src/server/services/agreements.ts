@@ -146,8 +146,7 @@ export async function acceptOffer(
       {
         userId: o.providerId,
         type: "offer_accepted",
-        title: `Jūsų pasiūlymas priimtas: ${headline}`,
-        body: `${formatPriceLabel(a.priceCents, a.frequency !== null)}, pradžia ${formatDateTime(a.startAt)}. Adresas ir kontaktai – užsakymo kortelėje.`,
+        params: { category: r.category, details: r.details, priceCents: a.priceCents, perVisit: a.frequency !== null, startAt: a.startAt.toISOString() },
         link: `/susitarimai/${a.id}`,
         dedupeKey: `offer_accepted:${a.id}`,
         email: true,
@@ -155,8 +154,7 @@ export async function acceptOffer(
       ...closed.map(({ providerId }) => ({
         userId: providerId,
         type: "request_closed",
-        title: `Užklausa baigėsi: ${headline}`,
-        body: "Klientas pasirinko kitą pasiūlymą. Ačiū, kad pasiūlėte.",
+        params: { category: r.category, details: r.details },
         link: `/darbai-salia/${r.id}`,
         dedupeKey: `request_closed:${a.id}:${providerId}`,
       })),
@@ -230,6 +228,7 @@ export async function getAgreement(actor: Actor, id: string): Promise<AgreementD
     category: a.category as CategoryId,
     headline: requestHeadline(a.category, a.details),
     description: a.description,
+    details: a.details,
     detailLines: describeDetails(a.category, a.details),
     municipalityLabel: municipalityLabel(a.municipality),
     locality: a.locality,
@@ -290,6 +289,8 @@ export async function listAgreements(actor: Actor, as: PartyRole): Promise<Agree
       viewerRole: as,
       status: a.status,
       headline: requestHeadline(a.category, a.details),
+      category: a.category as CategoryId,
+      details: a.details,
       counterpartName: nameMap.get(as === "client" ? a.providerId : a.clientId) ?? "",
       locality: a.locality,
       municipalityLabel: municipalityLabel(a.municipality),
@@ -337,11 +338,7 @@ export async function cancelAgreement(actor: Actor, id: string, input: unknown):
       {
         userId: other,
         type: status === "ended" ? "series_ended" : "agreement_cancelled",
-        title:
-          status === "ended"
-            ? `${ROLE_LABEL[role]} nutraukė būsimus vizitus: ${headline}`
-            : `${ROLE_LABEL[role]} atšaukė užsakymą: ${headline}`,
-        body: reason ? `Priežastis: ${reason}` : "",
+        params: { category: a.category, details: a.details, role, reason: reason || null },
         link: `/susitarimai/${a.id}`,
         dedupeKey: `agreement_cancelled:${a.id}`,
         email: true,
@@ -373,8 +370,7 @@ export async function markVisitDone(actor: Actor, visitId: string): Promise<void
       {
         userId: a.clientId,
         type: "visit_done",
-        title: `Darbas atliktas: ${requestHeadline(a.category, a.details)}`,
-        body: "Teikėjas pažymėjo darbą atliktu. Patvirtinkite rezultatą arba pažymėkite problemą.",
+        params: { category: a.category, details: a.details },
         link: `/susitarimai/${a.id}`,
         dedupeKey: `visit_done:${v.id}:${now.getTime()}`,
         email: true,
@@ -398,7 +394,7 @@ export async function confirmVisit(actor: Actor, visitId: string): Promise<void>
       {
         userId: a.providerId,
         type: "visit_confirmed",
-        title: `Klientas patvirtino darbą: ${requestHeadline(a.category, a.details)}`,
+        params: { category: a.category, details: a.details },
         link: `/susitarimai/${a.id}`,
         dedupeKey: `visit_confirmed:${v.id}`,
       },
@@ -418,8 +414,7 @@ export async function reportVisitProblem(actor: Actor, visitId: string, input: u
       {
         userId: a.providerId,
         type: "visit_problem",
-        title: `Klientas pažymėjo problemą: ${requestHeadline(a.category, a.details)}`,
-        body: note,
+        params: { category: a.category, details: a.details, note },
         link: `/susitarimai/${a.id}`,
         dedupeKey: `visit_problem:${v.id}:${now.getTime()}`,
         email: true,
@@ -448,8 +443,7 @@ export async function cancelVisit(actor: Actor, visitId: string, input: unknown)
       {
         userId: role === "client" ? a.providerId : a.clientId,
         type: "visit_cancelled",
-        title: `${ROLE_LABEL[role]} atšaukė vizitą ${formatDateTime(v.scheduledAt)}`,
-        body: `${requestHeadline(a.category, a.details)}. Kiti vizitai lieka suplanuoti.${reason ? ` Priežastis: ${reason}` : ""}`,
+        params: { category: a.category, details: a.details, role, scheduledAt: v.scheduledAt.toISOString(), reason: reason || null },
         link: `/susitarimai/${a.id}`,
         dedupeKey: `visit_cancelled:${v.id}`,
         email: true,

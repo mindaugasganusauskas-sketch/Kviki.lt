@@ -125,6 +125,7 @@ export interface RequestListItem {
   id: string;
   headline: string;
   category: CategoryId;
+  details: Record<string, unknown>;
   municipalityLabel: string;
   locality: string;
   timing: TimingDTO;
@@ -167,6 +168,7 @@ export interface AgreementDTO {
   category: CategoryId;
   headline: string;
   description: string;
+  details: Record<string, unknown>;
   detailLines: string[];
   municipalityLabel: string;
   locality: string;
@@ -193,6 +195,8 @@ export interface AgreementListItem {
   viewerRole: PartyRole;
   status: AgreementStatus;
   headline: string;
+  category: CategoryId;
+  details: Record<string, unknown>;
   counterpartName: string;
   locality: string;
   municipalityLabel: string;

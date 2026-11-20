@@ -14,6 +14,7 @@ import {
   updateAccountSchema,
 } from "@/shared/schemas";
 import type { Mode, ProviderProfileDTO, UserDTO } from "@/shared/types";
+import { isLocale, type Locale } from "@/shared/locale";
 import type { CategoryId } from "@/shared/categories";
 
 export function toUserDTO(actor: Actor): UserDTO {
@@ -28,7 +29,7 @@ export function toUserDTO(actor: Actor): UserDTO {
   };
 }
 
-export async function register(input: unknown, ip: string): Promise<{ userId: string; mode: Mode }> {
+export async function register(input: unknown, ip: string, locale: Locale = "lt"): Promise<{ userId: string; mode: Mode }> {
   if (!allow(`register:${ip}`, 20, 60 * 60 * 1000)) {
     throw new AppError("RATE_LIMITED", "Per daug bandymų. Pabandykite vėliau.");
   }
@@ -41,7 +42,7 @@ export async function register(input: unknown, ip: string): Promise<{ userId: st
   try {
     const [row] = await db
       .insert(users)
-      .values({ email: data.email, passwordHash, name: data.name, phone: data.phone ?? null, termsAcceptedAt: new Date() })
+      .values({ email: data.email, passwordHash, name: data.name, phone: data.phone ?? null, termsAcceptedAt: new Date(), locale })
       .returning({ id: users.id });
     return { userId: row.id, mode: data.mode ?? "client" };
   } catch (err) {
@@ -157,4 +158,10 @@ export async function saveProviderProfile(actor: Actor, input: unknown): Promise
     await tx.update(users).set({ activeMode: "provider" }).where(eq(users.id, actor.id));
   });
   return (await getProviderProfile(actor.id))!;
+}
+
+/** Išsaugo naudotojo kalbą – pagal ją rašomi pranešimai ir el. laiškai. */
+export async function setUserLocale(userId: string, locale: unknown): Promise<void> {
+  if (!isLocale(locale)) return;
+  await db.update(users).set({ locale }).where(eq(users.id, userId));
 }

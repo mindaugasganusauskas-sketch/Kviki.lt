@@ -7,8 +7,11 @@ import { RequestWizard } from "@/components/wizard/request-wizard";
 import { fromRequest } from "@/components/wizard/state";
 import { PageHeader } from "@/components/ui";
 import type { RequestView } from "@/shared/types";
+import { getI18n } from "@/i18n/server";
 
-export const metadata: Metadata = { title: "Redaguoti užklausą" };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getI18n()).t.titles.editRequest };
+}
 
 export default async function EditRequestPage(props: PageProps<"/uzklausos/[id]/redaguoti">) {
   const { id } = await props.params;
@@ -21,10 +24,11 @@ export default async function EditRequestPage(props: PageProps<"/uzklausos/[id]/
     throw err;
   }
   if (view.viewer !== "owner" || (view.status !== "open" && view.status !== "expired")) redirect(`/uzklausos/${id}`);
+  const { t } = await getI18n();
   return (
     <div>
       <div className="mx-auto max-w-2xl">
-        <PageHeader back={{ href: `/uzklausos/${id}`, label: "Atgal į užklausą" }} title="Redaguoti užklausą" />
+        <PageHeader back={{ href: `/uzklausos/${id}`, label: t.request.backToRequest }} title={t.titles.editRequest} />
       </div>
       <RequestWizard
         mode="edit"

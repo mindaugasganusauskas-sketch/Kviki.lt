@@ -25,7 +25,14 @@ export async function api<T = unknown>(path: string, opts: Options = {}): Promis
   try {
     res = await fetch(path, init);
   } catch {
-    throw new ApiError("NETWORK", "Nepavyko susisiekti su serveriu. Patikrinkite interneto ryšį ir bandykite dar kartą.", 0);
+    const en = typeof document !== "undefined" && document.documentElement.lang === "en";
+    throw new ApiError(
+      "NETWORK",
+      en
+        ? "Could not reach the server. Check your internet connection and try again."
+        : "Nepavyko susisiekti su serveriu. Patikrinkite interneto ryšį ir bandykite dar kartą.",
+      0,
+    );
   }
   const text = await res.text();
   let body: unknown = null;
@@ -36,7 +43,9 @@ export async function api<T = unknown>(path: string, opts: Options = {}): Promis
   }
   if (!res.ok) {
     const err = (body as ApiErrorBody | null)?.error;
-    throw new ApiError(err?.code ?? "HTTP_" + res.status, err?.message ?? "Įvyko klaida. Bandykite dar kartą.", res.status, err?.details);
+    const en = typeof document !== "undefined" && document.documentElement.lang === "en";
+    const fallback = en ? "Something went wrong. Please try again." : "Įvyko klaida. Bandykite dar kartą.";
+    throw new ApiError(err?.code ?? "HTTP_" + res.status, err?.message ?? fallback, res.status, err?.details);
   }
   return body as T;
 }

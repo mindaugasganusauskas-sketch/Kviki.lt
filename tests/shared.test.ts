@@ -28,17 +28,22 @@ describe("formatavimas", () => {
     expect(formatPrice(9000).replace(/\s/g, " ")).toBe("90 €");
     expect(formatPrice(9050).replace(/\s/g, " ")).toBe("90,50 €");
     expect(formatPriceLabel(4000, true).replace(/\s/g, " ")).toBe("40 € už kartą");
+    expect(formatPriceLabel(4000, true, "en")).toBe("€40 per visit");
+    expect(formatPrice(9050, "en")).toBe("€90.50");
   });
   it("datos be dvigubo „d.“", () => {
     const now = new Date("2026-11-20T10:00:00Z");
-    expect(formatDay(new Date("2026-11-20T15:00:00Z"), now)).toBe("Šiandien");
-    expect(formatDay(new Date("2026-11-21T07:00:00Z"), now)).toBe("Rytoj");
-    expect(formatDay(new Date("2026-11-24T07:00:00Z"), now)).toBe("Antradienis, lapkričio 24 d.");
+    expect(formatDay(new Date("2026-11-20T15:00:00Z"), "lt", now)).toBe("Šiandien");
+    expect(formatDay(new Date("2026-11-21T07:00:00Z"), "lt", now)).toBe("Rytoj");
+    expect(formatDay(new Date("2026-11-24T07:00:00Z"), "lt", now)).toBe("Antradienis, lapkričio 24 d.");
+    expect(formatDay(new Date("2026-11-21T07:00:00Z"), "en", now)).toBe("Tomorrow");
+    expect(formatDay(new Date("2026-11-24T07:00:00Z"), "en", now)).toBe("Tuesday, 24 November");
   });
   it("laiko intervalas", () => {
     const now = new Date("2026-11-20T10:00:00Z");
     const t = { type: "window" as const, windowStart: vilniusToDate("2026-11-20", "08:00").toISOString(), windowEnd: vilniusToDate("2026-11-21", "20:00").toISOString() };
-    expect(formatTiming(t, now)).toBe("Šiandien 08:00 – rytoj 20:00");
+    expect(formatTiming(t, "lt", now)).toBe("Šiandien 08:00 – rytoj 20:00");
+    expect(formatTiming(t, "en", now)).toBe("Today 08:00 – tomorrow 20:00");
     expect(formatTiming({ type: "asap", windowStart: null, windowEnd: null })).toBe("Kuo greičiau");
   });
   it("antraštė ir apimtis", () => {
@@ -46,6 +51,8 @@ describe("formatavimas", () => {
     expect(requestHeadline("mowing", d)).toBe("Žolės pjovimas · apie 40 a");
     expect(describeDetails("mowing", d)).toContain("Žolės surinkti nereikia");
     expect(requestHeadline("helper", { peopleCount: 2, durationHours: 3 })).toBe("Pagalbiniai darbai · 2 žmonės, ~3 val.");
+    expect(requestHeadline("mowing", d, "en")).toBe("Grass mowing · about 40 ares");
+    expect(describeDetails("mowing", d, "en")).toContain("No need to collect grass");
   });
 });
 

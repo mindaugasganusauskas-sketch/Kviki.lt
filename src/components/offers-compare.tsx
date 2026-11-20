@@ -7,38 +7,42 @@ import { api, ApiError } from "@/lib/api-client";
 import { businessFormLabel, formatDateTime, formatPrice } from "@/shared/format";
 import type { OfferDTO } from "@/shared/types";
 import { Alert, Badge, Button, cx } from "./ui";
+import { useI18n } from "@/i18n/client";
 
 type Sort = "price" | "time";
 
 function ProviderLine({ offer }: { offer: OfferDTO }) {
+  const { t, locale } = useI18n();
   const Icon = offer.provider.businessForm === "company" ? Building2 : User;
   return (
     <div className="min-w-0">
       <p className="flex flex-wrap items-center gap-1.5 font-bold">
         {offer.provider.displayName}
         {offer.provider.verified && (
-          <span className="inline-flex items-center gap-0.5 text-xs font-semibold text-brand-700" title="Teikėjo duomenys patikrinti">
-            <BadgeCheck className="size-4" aria-hidden /> Patikrinta
+          <span className="inline-flex items-center gap-0.5 text-xs font-semibold text-brand-700" title={t.offers.verifiedTitle}>
+            <BadgeCheck className="size-4" aria-hidden /> {t.offers.verified}
           </span>
         )}
       </p>
       <p className="mt-0.5 inline-flex items-center gap-1 text-sm text-muted">
-        <Icon className="size-3.5" aria-hidden /> {businessFormLabel(offer.provider.businessForm)}
+        <Icon className="size-3.5" aria-hidden /> {businessFormLabel(offer.provider.businessForm, locale)}
       </p>
     </div>
   );
 }
 
 function PriceBlock({ offer, large = false }: { offer: OfferDTO; large?: boolean }) {
+  const { t, locale } = useI18n();
   return (
     <div>
-      <p className={cx("font-extrabold tabular-nums text-ink", large ? "text-3xl" : "text-2xl")}>{formatPrice(offer.priceCents)}</p>
-      <p className="text-xs font-medium text-muted">{offer.perVisit ? "už vieną vizitą" : "galutinė kaina"}</p>
+      <p className={cx("font-extrabold tabular-nums text-ink", large ? "text-3xl" : "text-2xl")}>{formatPrice(offer.priceCents, locale)}</p>
+      <p className="text-xs font-medium text-muted">{offer.perVisit ? t.offers.perVisit : t.offers.finalPrice}</p>
     </div>
   );
 }
 
 export function OffersCompare({ requestId, offers }: { requestId: string; offers: OfferDTO[] }) {
+  const { t, locale } = useI18n();
   const router = useRouter();
   const [sort, setSort] = useState<Sort>("price");
   const [selected, setSelected] = useState<OfferDTO | null>(null);
@@ -74,7 +78,7 @@ export function OffersCompare({ requestId, offers }: { requestId: string; offers
     const fresh = offers.find((o) => o.id === selected.id);
     if (!fresh) return;
     if (fresh.version !== selected.version || fresh.needsReconfirmation !== selected.needsReconfirmation) {
-      setError("Teikėjas ką tik pakeitė pasiūlymą. Peržiūrėkite naujas sąlygas.");
+      setError(t.offers.changedLive);
       setSelected(fresh);
     }
   }, [offers, selected]);
@@ -111,20 +115,20 @@ export function OffersCompare({ requestId, offers }: { requestId: string; offers
   return (
     <div>
       {notice && (
-        <Alert tone="warning" className="mb-3" title="Sąlygos pasikeitė">
+        <Alert tone="warning" className="mb-3" title={t.offers.changedTitle}>
           {notice}
         </Alert>
       )}
       <div className="mb-3 flex items-center justify-between gap-2">
         <p className="text-sm text-muted">
-          {offers.length} {offers.length === 1 ? "pasiūlymas" : offers.length < 10 ? "pasiūlymai" : "pasiūlymų"}
+          {t.offers.count(offers.length)}
         </p>
-        <div className="flex items-center gap-1 rounded-xl bg-stone-100 p-1 text-sm" role="group" aria-label="Rikiuoti">
+        <div className="flex items-center gap-1 rounded-xl bg-stone-100 p-1 text-sm" role="group" aria-label={t.offers.sort}>
           <ArrowUpDown className="ml-1.5 size-4 text-muted" aria-hidden />
           {(
             [
-              ["price", "Pigiausi"],
-              ["time", "Anksčiausi"],
+              ["price", t.offers.cheapest],
+              ["time", t.offers.earliest],
             ] as const
           ).map(([k, label]) => (
             <button
@@ -145,10 +149,10 @@ export function OffersCompare({ requestId, offers }: { requestId: string; offers
         <table className="w-full text-left">
           <thead className="bg-paper text-xs uppercase tracking-wide text-muted">
             <tr>
-              <th className="px-4 py-3 font-semibold">Teikėjas</th>
-              <th className="px-4 py-3 font-semibold">Galima pradžia</th>
-              <th className="px-4 py-3 font-semibold">Kaina</th>
-              <th className="px-4 py-3 font-semibold">Kas įskaičiuota</th>
+              <th className="px-4 py-3 font-semibold">{t.offers.colProvider}</th>
+              <th className="px-4 py-3 font-semibold">{t.offers.colStart}</th>
+              <th className="px-4 py-3 font-semibold">{t.offers.colPrice}</th>
+              <th className="px-4 py-3 font-semibold">{t.offers.colIncluded}</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
@@ -159,19 +163,19 @@ export function OffersCompare({ requestId, offers }: { requestId: string; offers
                   <ProviderLine offer={o} />
                 </td>
                 <td className="px-4 py-4">
-                  <p className="font-semibold">{formatDateTime(o.startAt)}</p>
-                  {o.startAt === earliest && !o.needsReconfirmation && offers.length > 1 && <Badge tone="blue">Anksčiausiai</Badge>}
+                  <p className="font-semibold">{formatDateTime(o.startAt, locale)}</p>
+                  {o.startAt === earliest && !o.needsReconfirmation && offers.length > 1 && <Badge tone="blue">{t.offers.earliestBadge}</Badge>}
                 </td>
                 <td className="px-4 py-4">
                   <PriceBlock offer={o} />
-                  {o.priceCents === cheapest && !o.needsReconfirmation && offers.length > 1 && <Badge tone="green">Pigiausia</Badge>}
+                  {o.priceCents === cheapest && !o.needsReconfirmation && offers.length > 1 && <Badge tone="green">{t.offers.cheapestBadge}</Badge>}
                 </td>
                 <td className="max-w-xs px-4 py-4 text-sm">{o.included}</td>
                 <td className="px-4 py-4 text-right">
                   {o.needsReconfirmation ? (
-                    <Badge tone="amber">Laukiama teikėjo patvirtinimo</Badge>
+                    <Badge tone="amber">{t.offers.waitingReconfirm}</Badge>
                   ) : (
-                    <Button onClick={() => { setError(null); setNotice(null); setSelected(o); }}>Pasirinkti</Button>
+                    <Button onClick={() => { setError(null); setNotice(null); setSelected(o); }}>{t.offers.choose}</Button>
                   )}
                 </td>
               </tr>
@@ -187,23 +191,23 @@ export function OffersCompare({ requestId, offers }: { requestId: string; offers
             <div className="flex items-start justify-between gap-3">
               <PriceBlock offer={o} />
               <div className="flex flex-wrap justify-end gap-1">
-                {o.priceCents === cheapest && !o.needsReconfirmation && offers.length > 1 && <Badge tone="green">Pigiausia</Badge>}
-                {o.startAt === earliest && !o.needsReconfirmation && offers.length > 1 && <Badge tone="blue">Anksčiausiai</Badge>}
+                {o.priceCents === cheapest && !o.needsReconfirmation && offers.length > 1 && <Badge tone="green">{t.offers.cheapestBadge}</Badge>}
+                {o.startAt === earliest && !o.needsReconfirmation && offers.length > 1 && <Badge tone="blue">{t.offers.earliestBadge}</Badge>}
               </div>
             </div>
             <p className="mt-2 flex items-center gap-1.5 font-semibold">
               <CalendarClock className="size-4 shrink-0 text-brand-600" aria-hidden />
-              {formatDateTime(o.startAt)}
+              {formatDateTime(o.startAt, locale)}
             </p>
             <div className="mt-3 border-t border-line pt-3">
               <ProviderLine offer={o} />
               <p className="mt-2 text-sm">{o.included}</p>
             </div>
             {o.needsReconfirmation ? (
-              <p className="mt-3 text-sm font-medium text-sun-700">Po jūsų pakeitimų laukiama teikėjo patvirtinimo</p>
+              <p className="mt-3 text-sm font-medium text-sun-700">{t.offers.waitingReconfirmLong}</p>
             ) : (
               <Button className="mt-3 w-full" onClick={() => { setError(null); setNotice(null); setSelected(o); }}>
-                Pasirinkti
+                {t.offers.choose}
               </Button>
             )}
           </li>
@@ -220,9 +224,9 @@ export function OffersCompare({ requestId, offers }: { requestId: string; offers
           <div className="p-5">
             <div className="flex items-start justify-between gap-3">
               <h2 id="confirm-title" className="text-xl font-bold">
-                Patvirtinti susitarimą?
+                {t.offers.confirmTitle}
               </h2>
-              <button type="button" onClick={() => setSelected(null)} aria-label="Uždaryti" className="rounded-lg p-1 hover:bg-stone-100">
+              <button type="button" onClick={() => setSelected(null)} aria-label={t.common.close} className="rounded-lg p-1 hover:bg-stone-100">
                 <X className="size-5" aria-hidden />
               </button>
             </div>
@@ -231,19 +235,19 @@ export function OffersCompare({ requestId, offers }: { requestId: string; offers
               <div className="flex flex-wrap items-end justify-between gap-3">
                 <PriceBlock offer={selected} large />
                 <div className="text-right">
-                  <p className="text-xs text-muted">{selected.perVisit ? "Pirmas vizitas" : "Pradžia"}</p>
-                  <p className="font-bold">{formatDateTime(selected.startAt)}</p>
+                  <p className="text-xs text-muted">{selected.perVisit ? t.offers.firstVisit : t.offers.start}</p>
+                  <p className="font-bold">{formatDateTime(selected.startAt, locale)}</p>
                 </div>
               </div>
               <div>
-                <p className="text-xs text-muted">Kas įskaičiuota</p>
+                <p className="text-xs text-muted">{t.offers.included}</p>
                 <p className="font-medium">{selected.included}</p>
               </div>
             </div>
             <ul className="mt-4 space-y-1.5 text-sm text-stone-700">
-              <li>• Teikėjas gaus jūsų tikslų adresą ir telefoną.</li>
-              <li>• Kiti pasiūlymai bus uždaryti.</li>
-              <li>• Apmokėjimą sutvarkote tiesiogiai su teikėju{selected.perVisit ? " už kiekvieną vizitą" : ""}.</li>
+              <li>• {t.offers.note1}</li>
+              <li>• {t.offers.note2}</li>
+              <li>• {t.offers.note3(selected.perVisit)}</li>
             </ul>
             {error && (
               <Alert tone="warning" className="mt-4">
@@ -252,11 +256,10 @@ export function OffersCompare({ requestId, offers }: { requestId: string; offers
             )}
             <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <Button variant="outline" onClick={() => setSelected(null)} disabled={pending}>
-                Atgal
+                {t.common.back}
               </Button>
               <Button onClick={accept} loading={pending} disabled={selected.needsReconfirmation || selected.status !== "active"}>
-                Patvirtinti už {formatPrice(selected.priceCents)}
-                {selected.perVisit ? " / kartą" : ""}
+                {t.offers.confirmFor(formatPrice(selected.priceCents, locale), selected.perVisit)}
               </Button>
             </div>
           </div>

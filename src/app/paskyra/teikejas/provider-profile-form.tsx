@@ -4,10 +4,11 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { Building2, Search, User, X } from "lucide-react";
 import { api } from "@/lib/api-client";
-import { CATEGORIES, type CategoryId } from "@/shared/categories";
+import { categoriesFor, type CategoryId } from "@/shared/categories";
 import { foldLt, MUNICIPALITIES, municipalityLabel } from "@/shared/municipalities";
 import type { ProviderProfileDTO } from "@/shared/types";
 import { Alert, Button, Card, Field, Input, Textarea, cx } from "@/components/ui";
+import { useI18n } from "@/i18n/client";
 
 export function ProviderProfileForm({
   profile,
@@ -18,6 +19,9 @@ export function ProviderProfileForm({
   defaultName: string;
   defaultPhone: string;
 }) {
+  const { t, locale } = useI18n();
+  const f = t.providerForm;
+  const CATEGORIES = categoriesFor(locale);
   const router = useRouter();
   const [businessForm, setBusinessForm] = useState<"individual" | "company">(profile?.businessForm ?? "individual");
   const [displayName, setDisplayName] = useState(profile?.displayName ?? defaultName);
@@ -53,12 +57,12 @@ export function ProviderProfileForm({
   return (
     <form onSubmit={submit} className="space-y-5" noValidate>
       <Card className="space-y-4">
-        <Field label="Veiklos forma">
-          <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Veiklos forma">
+        <Field label={f.businessForm}>
+          <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label={f.businessForm}>
             {(
               [
-                ["individual", "Individuali veikla", "Fizinis asmuo, dirbantis pagal individualią veiklą", User],
-                ["company", "Įmonė", "UAB, MB, IĮ ar kita juridinė forma", Building2],
+                ["individual", f.individual, f.individualHint, User],
+                ["company", f.company, f.companyHint, Building2],
               ] as const
             ).map(([value, label, hint, Icon]) => (
               <button
@@ -82,25 +86,25 @@ export function ProviderProfileForm({
           </div>
         </Field>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label={businessForm === "company" ? "Įmonės pavadinimas" : "Vardas, kurį matys klientai"} htmlFor="p-name">
+          <Field label={businessForm === "company" ? f.companyName : f.personName} htmlFor="p-name">
             <Input id="p-name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
           </Field>
           {businessForm === "company" && (
-            <Field label="Įmonės kodas" htmlFor="p-code" optional>
+            <Field label={f.companyCode} htmlFor="p-code" optional>
               <Input id="p-code" inputMode="numeric" value={companyCode} onChange={(e) => setCompanyCode(e.target.value)} />
             </Field>
           )}
-          <Field label="Telefonas" htmlFor="p-phone" hint="Klientas jį matys tik pasirinkęs jūsų pasiūlymą.">
+          <Field label={f.phone} htmlFor="p-phone" hint={f.phoneHint}>
             <Input id="p-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="tel" />
           </Field>
         </div>
-        <Field label="Trumpai apie save" htmlFor="p-desc" optional hint="Pvz., kokią techniką turite, kiek metų dirbate">
+        <Field label={f.about} htmlFor="p-desc" optional hint={f.aboutHint}>
           <Textarea id="p-desc" value={description} onChange={(e) => setDescription(e.target.value)} />
         </Field>
       </Card>
 
       <Card>
-        <Field label="Kokias paslaugas teikiate?">
+        <Field label={f.services}>
           <div className="grid gap-2 sm:grid-cols-2">
             {CATEGORIES.map((c) => {
               const on = categories.includes(c.id);
@@ -127,7 +131,7 @@ export function ProviderProfileForm({
       </Card>
 
       <Card>
-        <Field label="Kuriose savivaldybėse dirbate?" hint="Matysite tik šiose savivaldybėse paskelbtus darbus.">
+        <Field label={f.areas} hint={f.areasHint}>
           {areas.length > 0 && (
             <ul className="mb-3 flex flex-wrap gap-1.5">
               {areas.map((code) => (
@@ -137,7 +141,7 @@ export function ProviderProfileForm({
                     onClick={() => setAreas(areas.filter((a) => a !== code))}
                     className="inline-flex h-8 items-center gap-1 rounded-full bg-brand-700 px-3 text-xs font-semibold text-white"
                   >
-                    {municipalityLabel(code)} <X className="size-3.5" aria-label="pašalinti" />
+                    {municipalityLabel(code)} <X className="size-3.5" aria-label={t.common.remove} />
                   </button>
                 </li>
               ))}
@@ -145,7 +149,7 @@ export function ProviderProfileForm({
           )}
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" aria-hidden />
-            <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Ieškoti savivaldybės" className="pl-9" aria-label="Ieškoti savivaldybės" />
+            <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={f.search} className="pl-9" aria-label={f.search} />
           </div>
           <ul className="mt-2 max-h-64 overflow-y-auto rounded-xl border border-line">
             {filtered.map((m) => {
@@ -164,14 +168,14 @@ export function ProviderProfileForm({
                 </li>
               );
             })}
-            {filtered.length === 0 && <li className="px-3.5 py-3 text-sm text-muted">Nerasta</li>}
+            {filtered.length === 0 && <li className="px-3.5 py-3 text-sm text-muted">{f.notFound}</li>}
           </ul>
         </Field>
       </Card>
 
       {error && <Alert tone="error">{error}</Alert>}
       <Button type="submit" size="lg" className="w-full sm:w-auto" loading={pending}>
-        {profile ? "Išsaugoti profilį" : "Tapti teikėju ir žiūrėti darbus"}
+        {profile ? f.save : f.create}
       </Button>
     </form>
   );

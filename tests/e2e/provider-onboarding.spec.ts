@@ -29,3 +29,15 @@ test("naujas teikėjas užsiregistruoja, pasirenka paslaugas ir savivaldybes, pe
   await page.getByRole("button", { name: /Klientas/ }).click();
   await expect(page.getByRole("heading", { name: "Darbai šalia" })).toBeVisible();
 });
+
+test("kalbos perjungimas LT | EN", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Kokios pagalbos reikia?" })).toBeVisible();
+  await page.getByRole("button", { name: "en", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "What do you need help with?" })).toBeVisible();
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await page.getByRole("link", { name: /Grass mowing/ }).first().click();
+  await expect(page.getByRole("heading", { name: "Job scope" })).toBeVisible();
+  await page.getByRole("button", { name: "lt", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Darbo apimtis" })).toBeVisible();
+});

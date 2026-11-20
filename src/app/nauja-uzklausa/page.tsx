@@ -2,8 +2,11 @@ import type { Metadata } from "next";
 import { getActor } from "@/server/auth/session";
 import { isCategoryId } from "@/shared/categories";
 import { RequestWizard } from "@/components/wizard/request-wizard";
+import { getI18n } from "@/i18n/server";
 
-export const metadata: Metadata = { title: "Nauja užklausa" };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getI18n()).t.titles.newRequest };
+}
 
 export default async function NewRequestPage(props: PageProps<"/nauja-uzklausa">) {
   const actor = await getActor();

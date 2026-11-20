@@ -40,8 +40,7 @@ export async function expireStaleRequests(): Promise<number> {
       ...rows.map((r) => ({
         userId: r.clientId,
         type: "request_expired",
-        title: `Užklausa nebegalioja: ${requestHeadline(r.category, r.details)}`,
-        body: "Laikas praėjo arba ilgai nebuvo susitarta. Jei darbo vis dar reikia, atnaujinkite užklausą nauju laiku.",
+        params: { category: r.category, details: r.details, audience: "client" as const },
         link: `/uzklausos/${r.id}`,
         dedupeKey: `request_expired:${r.id}:${Date.now()}`,
         email: true,
@@ -51,7 +50,7 @@ export async function expireStaleRequests(): Promise<number> {
         return {
           userId: c.providerId,
           type: "request_expired",
-          title: `Užklausa nebegalioja: ${requestHeadline(r.category, r.details)}`,
+          params: { category: r.category, details: r.details, audience: "provider" as const },
           link: `/darbai-salia/${r.id}`,
           dedupeKey: `request_expired:${r.id}:${c.providerId}:${Date.now()}`,
         };

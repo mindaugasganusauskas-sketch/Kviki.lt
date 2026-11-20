@@ -4,7 +4,8 @@ import { ArrowRight, BadgeCheck, Lock, MessageSquareText, Wallet, Zap } from "lu
 import { getActor } from "@/server/auth/session";
 import { listMyRequests } from "@/server/services/requests";
 import { demoEnabled } from "@/server/services/demo";
-import { CATEGORIES } from "@/shared/categories";
+import { categoriesFor } from "@/shared/categories";
+import { getI18n } from "@/i18n/server";
 import { CategoryBadge } from "@/components/category-icon";
 import { Alert, ButtonLink, Card, cx } from "@/components/ui";
 import { RequestListCard } from "@/components/request-list-card";
@@ -26,23 +27,25 @@ function Grass({ className }: { className?: string }) {
   );
 }
 
-const STEPS = [
-  { n: 1, title: "Aprašote darbą", text: "Kas, kur ir kada. Galite pridėti nuotrauką. Tikslų adresą matys tik pasirinktas teikėjas.", tint: "bg-brand-100 text-brand-700" },
-  { n: 2, title: "Gaunate pasiūlymus", text: "Teikėjai siūlo galutinę kainą ir konkretų laiką. Lyginate pagal kainą ar ankstyviausią laiką.", tint: "bg-sun-100 text-sun-700" },
-  { n: 3, title: "Pasirenkate – ir atlikta", text: "Abu matote tą pačią užsakymo kortelę. Atsiskaitote tiesiogiai su teikėju.", tint: "bg-berry-100 text-berry-600" },
-];
 
 export default async function HomePage(props: PageProps<"/">) {
   const sp = await props.searchParams;
+  const { locale, t } = await getI18n();
   const actor = await getActor();
+  const CATEGORIES = categoriesFor(locale);
+  const STEPS = [
+    { n: 1, title: t.home.step1Title, text: t.home.step1Text, tint: "bg-brand-100 text-brand-700" },
+    { n: 2, title: t.home.step2Title, text: t.home.step2Text, tint: "bg-sun-100 text-sun-700" },
+    { n: 3, title: t.home.step3Title, text: t.home.step3Text, tint: "bg-berry-100 text-berry-600" },
+  ];
   if (actor?.mode === "provider") redirect("/darbai-salia");
   const recent = actor ? (await listMyRequests(actor)).filter((r) => r.status === "open" || r.status === "agreed").slice(0, 3) : [];
 
   return (
     <div className="space-y-12">
       {sp.paskyra === "istrinta" && !actor && (
-        <Alert tone="success" title="Paskyra ištrinta">
-          Jūsų asmens duomenys pašalinti. Ačiū, kad naudojotės Kviki.
+        <Alert tone="success" title={t.home.deletedTitle}>
+          {t.home.deletedText}
         </Alert>
       )}
 
@@ -52,13 +55,13 @@ export default async function HomePage(props: PageProps<"/">) {
 
         <div className="relative">
           <p className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-brand-100 ring-1 ring-white/15 backdrop-blur">
-            <Zap className="size-3.5 text-sun-300" aria-hidden /> Vietinė pagalba kiemo ir ūkio darbams
+            <Zap className="size-3.5 text-sun-300" aria-hidden /> {t.meta.tagline}
           </p>
           <h1 className="mt-4 max-w-2xl text-[2.25rem] font-extrabold leading-[1.08] tracking-tight sm:text-5xl">
-            Kokios <span className="text-sun-300">pagalbos</span> reikia?
+            {t.home.heroBefore} <span className="text-sun-300">{t.home.heroAccent}</span> {t.home.heroAfter}
           </h1>
           <p className="mt-3 max-w-xl text-[17px] leading-relaxed text-brand-100">
-            Aprašykite darbą vieną kartą. Netoliese dirbantys žmonės ir įmonės pasiūlys kainą ir laiką – jums lieka išsirinkti.
+            {t.home.heroText}
           </p>
 
           <ul className="mt-7 grid grid-cols-2 gap-2.5 sm:grid-cols-5 sm:gap-3">
@@ -86,9 +89,9 @@ export default async function HomePage(props: PageProps<"/">) {
 
       <ul className="-mt-4 grid gap-2 text-sm sm:grid-cols-3">
         {[
-          { icon: MessageSquareText, text: "Vienas aprašymas – keli pasiūlymai" },
-          { icon: Lock, text: "Tikslų adresą mato tik pasirinktas teikėjas" },
-          { icon: Wallet, text: "Atsiskaitote tiesiogiai, be tarpininkų" },
+          { icon: MessageSquareText, text: t.home.trust1 },
+          { icon: Lock, text: t.home.trust2 },
+          { icon: Wallet, text: t.home.trust3 },
         ].map(({ icon: Icon, text }) => (
           <li key={text} className="flex items-center gap-2.5 rounded-xl bg-white px-3.5 py-3 font-medium text-stone-700 ring-1 ring-line">
             <Icon className="size-4.5 shrink-0 text-brand-600" aria-hidden /> {text}
@@ -99,9 +102,9 @@ export default async function HomePage(props: PageProps<"/">) {
       {recent.length > 0 && (
         <section>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-xl font-extrabold tracking-tight">Jūsų aktyvios užklausos</h2>
+            <h2 className="text-xl font-extrabold tracking-tight">{t.home.activeRequests}</h2>
             <Link href="/mano-uzklausos" className="text-sm font-semibold text-brand-700 hover:underline">
-              Visos
+              {t.home.all}
             </Link>
           </div>
           <div className="grid gap-3">
@@ -113,7 +116,7 @@ export default async function HomePage(props: PageProps<"/">) {
       )}
 
       <section>
-        <h2 className="text-2xl font-extrabold tracking-tight">Kaip tai veikia</h2>
+        <h2 className="text-2xl font-extrabold tracking-tight">{t.home.howTitle}</h2>
         <ol className="mt-5 grid gap-3 sm:grid-cols-3">
           {STEPS.map((s) => (
             <li key={s.n}>
@@ -129,11 +132,8 @@ export default async function HomePage(props: PageProps<"/">) {
 
       {!actor && demoEnabled() && (
         <section className="rounded-3xl border border-sun-200 bg-sun-50 p-5 sm:p-7">
-          <p className="text-lg font-extrabold">Norite pabandyti be registracijos?</p>
-          <p className="mt-1 max-w-2xl text-[15px] text-stone-700">
-            Demonstracijoje yra išgalvota užklausa iš Paantvardžio (Jurbarko r.) su dviem pasiūlymais. Duomenys aiškiai pažymėti ir
-            nematomi tikriems naudotojams.
-          </p>
+          <p className="text-lg font-extrabold">{t.demo.tryTitle}</p>
+          <p className="mt-1 max-w-2xl text-[15px] text-stone-700">{t.demo.tryText}</p>
           <DemoButtons />
         </section>
       )}
@@ -145,14 +145,12 @@ export default async function HomePage(props: PageProps<"/">) {
             <div className="flex gap-3.5">
               <BadgeCheck className="mt-0.5 size-7 shrink-0 text-sun-300" aria-hidden />
               <div>
-                <p className="text-xl font-extrabold">Teikiate paslaugas?</p>
-                <p className="mt-1 max-w-xl text-[15px] text-white/75">
-                  Įmonė ar individuali veikla – pasirinkite paslaugas ir savivaldybes, matykite darbus šalia ir siūlykite savo kainą.
-                </p>
+                <p className="text-xl font-extrabold">{t.home.providerTitle}</p>
+                <p className="mt-1 max-w-xl text-[15px] text-white/75">{t.home.providerText}</p>
               </div>
             </div>
             <ButtonLink href={actor ? "/paskyra/teikejas" : "/registracija?teikejas=1"} variant="accent" size="lg" className="shrink-0">
-              Tapti teikėju <ArrowRight className="size-5" aria-hidden />
+              {t.home.becomeProvider} <ArrowRight className="size-5" aria-hidden />
             </ButtonLink>
           </div>
         </section>

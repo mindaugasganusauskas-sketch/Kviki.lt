@@ -5,19 +5,21 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Lock, Minus, Plus, Send } from "lucide-react";
 import { api } from "@/lib/api-client";
 import {
-  CATEGORIES,
+  categoriesFor,
   describeDetails,
-  EQUIPMENT,
-  GRASS_HEIGHTS,
-  PRUNING_TARGETS,
+  OPTION_TEXT,
   requestHeadline,
-  YARD_TASKS,
   type CategoryId,
   type DetailsByCategory,
+  type Equipment,
+  type GrassHeight,
+  type PruningTarget,
+  type YardTask,
 } from "@/shared/categories";
-import { formatDateKey, formatTiming, frequencyLabel } from "@/shared/format";
+import { FREQUENCY_LABELS, formatDateKey, formatTiming, frequencyLabel, midSentence } from "@/shared/format";
 import { MUNICIPALITIES, municipalityLabel } from "@/shared/municipalities";
-import { FREQUENCIES, vilniusDateKey, vilniusToDate, type Frequency } from "@/shared/time";
+import { vilniusDateKey, vilniusToDate, type Frequency } from "@/shared/time";
+import { useI18n } from "@/i18n/client";
 import type { PhotoDTO, UserDTO } from "@/shared/types";
 import { AuthForm } from "../auth-form";
 import { CategoryBadge } from "../category-icon";
@@ -28,7 +30,6 @@ import {
   emptyState,
   guessCategory,
   quickWindows,
-  STEPS,
   toPayload,
   validateStep,
   type StepErrors,
@@ -102,6 +103,11 @@ export interface WizardProps {
 }
 
 export function RequestWizard(props: WizardProps) {
+  const { locale, t } = useI18n();
+  const w = t.wizard;
+  const CATEGORIES = categoriesFor(locale);
+  const opt = OPTION_TEXT[locale];
+  const STEPS = w.steps;
   const router = useRouter();
   const [s, setS] = useState<WizardState>(() => props.initial ?? emptyState(props.user?.phone ?? ""));
   const [step, setStep] = useState(props.mode === "edit" ? 1 : 0);
@@ -158,7 +164,7 @@ export function RequestWizard(props: WizardProps) {
   function go(to: number) {
     if (to > step) {
       for (let i = step; i < to; i++) {
-        const e = validateStep(i, s);
+        const e = validateStep(i, s, w);
         if (Object.keys(e).length) {
           setErrors(e);
           setStep(i);
@@ -172,9 +178,9 @@ export function RequestWizard(props: WizardProps) {
   }
 
   async function publish() {
-    const e = validateStep(3, s);
+    const e = validateStep(3, s, w);
     if (Object.keys(e).length) {
-      setSubmitError(e.form ?? "Patikrinkite įvestus duomenis");
+      setSubmitError(e.form ?? w.errForm);
       return;
     }
     setSubmitting(true);
@@ -204,7 +210,7 @@ export function RequestWizard(props: WizardProps) {
   }
 
   const today = vilniusDateKey(new Date());
-  const quick = useMemo(() => quickWindows(), []);
+  const quick = useMemo(() => quickWindows(new Date(), w), [w]);
   const sortedMunicipalities = useMemo(
     () => [...MUNICIPALITIES].sort((a, b) => a.label.localeCompare(b.label, "lt")),
     [],
@@ -215,7 +221,7 @@ export function RequestWizard(props: WizardProps) {
   return (
     <div ref={topRef} className="mx-auto max-w-2xl scroll-mt-24">
       {/* Žingsnių juosta */}
-      <ol className="mb-5 grid grid-cols-4 gap-1.5" aria-label="Žingsniai">
+      <ol className="mb-5 grid grid-cols-4 gap-1.5" aria-label={w.stepsLabel}>
         {STEPS.map((label, i) => (
           <li key={label}>
             <button
@@ -234,7 +240,7 @@ export function RequestWizard(props: WizardProps) {
         ))}
       </ol>
       <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted sm:hidden">
-        {step + 1} žingsnis iš 4 · {STEPS[step]}
+        {w.stepOf(step + 1)} · {STEPS[step]}
       </p>
 
       {restored && step === 0 && (
@@ -251,18 +257,18 @@ export function RequestWizard(props: WizardProps) {
                 setRestored(false);
               }}
             >
-              Pradėti iš naujo
+              {w.startOver}
             </Button>
           }
         >
-          Tęsiate anksčiau pradėtą užklausą. Nuotraukas, jei jas buvote pridėję, reikės pridėti dar kartą.
+          {w.restored}
         </Alert>
       )}
 
       {/* 1. Darbas */}
       {step === 0 && (
         <section>
-          <h1 className="text-2xl font-bold">Kokios pagalbos reikia?</h1>
+          <h1 className="text-2xl font-bold">{w.whatHelp}</h1>
           <ul className="mt-4 grid gap-2 sm:grid-cols-2">
             {CATEGORIES.map((c) => (
               <li key={c.id}>
@@ -289,7 +295,7 @@ export function RequestWizard(props: WizardProps) {
           </ul>
           {errors.category && <p className="mt-2 text-sm font-medium text-red-700">{errors.category}</p>}
           <div className="mt-5">
-            <Field label="Arba aprašykite savais žodžiais" htmlFor="w-free" optional>
+            <Field label={w.ownWords} htmlFor="w-free" optional>
               <Textarea
                 id="w-free"
                 value={s.description}
@@ -298,7 +304,7 @@ export function RequestWizard(props: WizardProps) {
                   const guess = !s.category ? guessCategory(text) : null;
                   update(guess ? { description: text, category: guess } : { description: text });
                 }}
-                placeholder="Pvz.: Reikia nupjauti apie 40 arų pievos prie sodybos, žolė iki kelių."
+                placeholder={w.ownWordsPlaceholder}
               />
             </Field>
           </div>
@@ -309,18 +315,18 @@ export function RequestWizard(props: WizardProps) {
       {step === 1 && cat && (
         <section className="space-y-5">
           <div>
-            <h1 className="text-2xl font-bold">Darbo apimtis</h1>
+            <h1 className="text-2xl font-bold">{w.scopeTitle}</h1>
             <p className="mt-1 text-muted">
               {CATEGORIES.find((c) => c.id === cat)?.label}.{" "}
               <button type="button" className="font-semibold text-brand-700 underline" onClick={() => go(0)}>
-                Keisti
+                {t.common.change}
               </button>
             </p>
           </div>
 
           {cat === "mowing" && (
             <>
-              <Field label="Apytikslis plotas" htmlFor="w-area" error={errors.area} hint="1 aras = 100 m². Jei nežinote – pažymėkite ir aprašykite ar pridėkite nuotrauką.">
+              <Field label={w.area} htmlFor="w-area" error={errors.area} hint={w.areaHint}>
                 <div className="flex flex-wrap items-center gap-3">
                   <div className="relative w-36">
                     <Input
@@ -331,44 +337,44 @@ export function RequestWizard(props: WizardProps) {
                       onChange={(e) => setDetails("mowing", { areaAres: numberOrNull(e.target.value) })}
                       className="pr-12"
                     />
-                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted">arų</span>
+                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted">{w.ares}</span>
                   </div>
                   <label className="flex items-center gap-2 text-sm font-medium">
                     <input type="checkbox" checked={s.areaUnknown} onChange={(e) => update({ areaUnknown: e.target.checked })} className="size-5 accent-brand-600" />
-                    Nežinau
+                    {w.dontKnow}
                   </label>
                 </div>
               </Field>
-              <Field label="Žolės aukštis">
+              <Field label={w.grassHeight}>
                 <Choice
-                  name="Žolės aukštis"
+                  name={w.grassHeight}
                   columns={4}
                   value={s.details.mowing.grassHeight}
                   onChange={(v) => setDetails("mowing", { grassHeight: v })}
-                  options={Object.entries(GRASS_HEIGHTS).map(([value, label]) => ({ value: value as keyof typeof GRASS_HEIGHTS, label }))}
+                  options={Object.entries(opt.grass).map(([value, label]) => ({ value: value as GrassHeight, label }))}
                 />
               </Field>
-              <Field label="Kieno technika">
+              <Field label={w.equipment}>
                 <Choice
-                  name="Kieno technika"
+                  name={w.equipment}
                   value={s.details.mowing.equipment}
                   onChange={(v) => setDetails("mowing", { equipment: v })}
-                  options={Object.entries(EQUIPMENT).map(([value, label]) => ({ value: value as keyof typeof EQUIPMENT, label }))}
+                  options={Object.entries(opt.equipment).map(([value, label]) => ({ value: value as Equipment, label }))}
                 />
               </Field>
               <div className="grid gap-2 sm:grid-cols-2">
-                <Toggle checked={s.details.mowing.collectGrass} onChange={(v) => setDetails("mowing", { collectGrass: v })} label="Žolę reikia surinkti" />
-                <Toggle checked={s.details.mowing.tractorAccess} onChange={(v) => setDetails("mowing", { tractorAccess: v })} label="Traktoriukas gali įvažiuoti" />
+                <Toggle checked={s.details.mowing.collectGrass} onChange={(v) => setDetails("mowing", { collectGrass: v })} label={w.collectGrass} />
+                <Toggle checked={s.details.mowing.tractorAccess} onChange={(v) => setDetails("mowing", { tractorAccess: v })} label={w.tractor} />
               </div>
             </>
           )}
 
           {cat === "yard" && (
             <>
-              <Field label="Ką reikia padaryti?">
+              <Field label={w.yardWhat}>
                 <div className="grid gap-2 sm:grid-cols-2">
-                  {Object.entries(YARD_TASKS).map(([key, label]) => {
-                    const k = key as keyof typeof YARD_TASKS;
+                  {Object.entries(opt.yardTasks).map(([key, label]) => {
+                    const k = key as YardTask;
                     const on = s.details.yard.tasks.includes(k);
                     return (
                       <Toggle
@@ -376,14 +382,14 @@ export function RequestWizard(props: WizardProps) {
                         checked={on}
                         label={label}
                         onChange={(v) =>
-                          setDetails("yard", { tasks: v ? [...s.details.yard.tasks, k] : s.details.yard.tasks.filter((t) => t !== k) })
+                          setDetails("yard", { tasks: v ? [...s.details.yard.tasks, k] : s.details.yard.tasks.filter((x) => x !== k) })
                         }
                       />
                     );
                   })}
                 </div>
               </Field>
-              <Field label="Apytikslis plotas" htmlFor="w-yard-area" error={errors.area} hint="Jei nežinote – pažymėkite „Nežinau“.">
+              <Field label={w.area} htmlFor="w-yard-area" error={errors.area} hint={w.areaHintShort}>
                 <div className="flex flex-wrap items-center gap-3">
                   <div className="relative w-36">
                     <Input
@@ -394,52 +400,52 @@ export function RequestWizard(props: WizardProps) {
                       onChange={(e) => setDetails("yard", { areaAres: numberOrNull(e.target.value) })}
                       className="pr-12"
                     />
-                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted">arų</span>
+                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted">{w.ares}</span>
                   </div>
                   <label className="flex items-center gap-2 text-sm font-medium">
                     <input type="checkbox" checked={s.areaUnknown} onChange={(e) => update({ areaUnknown: e.target.checked })} className="size-5 accent-brand-600" />
-                    Nežinau
+                    {w.dontKnow}
                   </label>
                 </div>
               </Field>
-              <Toggle checked={s.details.yard.haulAway} onChange={(v) => setDetails("yard", { haulAway: v })} label="Reikia išvežti atliekas" />
+              <Toggle checked={s.details.yard.haulAway} onChange={(v) => setDetails("yard", { haulAway: v })} label={w.haulWaste} />
             </>
           )}
 
           {cat === "pruning" && (
             <>
-              <Field label="Ką genėti?">
+              <Field label={w.pruneWhat}>
                 <Choice
-                  name="Ką genėti"
+                  name={w.pruneWhat}
                   columns={3}
                   value={s.details.pruning.target}
                   onChange={(v) => setDetails("pruning", { target: v })}
-                  options={Object.entries(PRUNING_TARGETS).map(([value, label]) => ({ value: value as keyof typeof PRUNING_TARGETS, label }))}
+                  options={Object.entries(opt.pruning).map(([value, label]) => ({ value: value as PruningTarget, label }))}
                 />
               </Field>
-              <Field label="Kiekis" htmlFor="w-amount" optional hint="Pvz.: 5 obelys arba 30 m gyvatvorės">
+              <Field label={w.amount} htmlFor="w-amount" optional hint={w.amountHint}>
                 <Input id="w-amount" value={s.details.pruning.amount} onChange={(e) => setDetails("pruning", { amount: e.target.value })} />
               </Field>
-              <Toggle checked={s.details.pruning.haulAway} onChange={(v) => setDetails("pruning", { haulAway: v })} label="Reikia išvežti šakas" />
+              <Toggle checked={s.details.pruning.haulAway} onChange={(v) => setDetails("pruning", { haulAway: v })} label={w.haulBranches} />
             </>
           )}
 
           {cat === "helper" && (
             <div className="grid gap-5 sm:grid-cols-2">
-              <Field label="Kiek žmonių prireiks?" error={errors.people}>
+              <Field label={w.people} error={errors.people}>
                 <div className="flex items-center gap-2">
-                  <Button type="button" variant="outline" aria-label="Mažiau" onClick={() => setDetails("helper", { peopleCount: Math.max(1, s.details.helper.peopleCount - 1) })}>
+                  <Button type="button" variant="outline" aria-label={w.fewer} onClick={() => setDetails("helper", { peopleCount: Math.max(1, s.details.helper.peopleCount - 1) })}>
                     <Minus className="size-4" aria-hidden />
                   </Button>
                   <span className="w-10 text-center text-xl font-bold" aria-live="polite">
                     {s.details.helper.peopleCount}
                   </span>
-                  <Button type="button" variant="outline" aria-label="Daugiau" onClick={() => setDetails("helper", { peopleCount: Math.min(20, s.details.helper.peopleCount + 1) })}>
+                  <Button type="button" variant="outline" aria-label={w.more} onClick={() => setDetails("helper", { peopleCount: Math.min(20, s.details.helper.peopleCount + 1) })}>
                     <Plus className="size-4" aria-hidden />
                   </Button>
                 </div>
               </Field>
-              <Field label="Kiek laiko gali užtrukti?" htmlFor="w-hours" optional>
+              <Field label={w.hours} htmlFor="w-hours" optional>
                 <div className="relative w-36">
                   <Input
                     id="w-hours"
@@ -448,18 +454,18 @@ export function RequestWizard(props: WizardProps) {
                     onChange={(e) => setDetails("helper", { durationHours: numberOrNull(e.target.value) })}
                     className="pr-12"
                   />
-                  <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted">val.</span>
+                  <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted">{w.hoursUnit}</span>
                 </div>
               </Field>
             </div>
           )}
 
           <Field
-            label={cat === "helper" || cat === "other" ? "Ką reikės padaryti?" : "Papildomai"}
+            label={cat === "helper" || cat === "other" ? w.whatToDo : w.extra}
             htmlFor="w-desc"
             optional={!(cat === "helper" || cat === "other")}
             error={errors.description}
-            hint="Kuo aiškiau aprašysite, tuo tikslesnę kainą pasiūlys teikėjai."
+            hint={w.descHint}
           >
             <Textarea
               id="w-desc"
@@ -467,18 +473,14 @@ export function RequestWizard(props: WizardProps) {
               value={s.description}
               onChange={(e) => update({ description: e.target.value })}
               placeholder={
-                cat === "mowing"
-                  ? "Pvz.: Traktoriukas gali įvažiuoti pro vartus. Prie tvoros yra keli akmenys."
-                  : cat === "helper"
-                    ? "Pvz.: Reikia sukrauti 3 m³ malkų į pašiūrę."
-                    : "Aprašykite darbą"
+                cat === "mowing" ? w.descPlaceholderMowing : cat === "helper" ? w.descPlaceholderHelper : w.descPlaceholderOther
               }
             />
           </Field>
 
-          <Field label="Nuotraukos" optional>
+          <Field label={w.photos} optional>
             {props.user?.isDemo ? (
-              <p className="rounded-xl bg-paper p-3 text-sm text-muted">Demonstracijoje nuotraukų įkelti negalima.</p>
+              <p className="rounded-xl bg-paper p-3 text-sm text-muted">{t.demo.noPhotos}</p>
             ) : (
             <PhotoPicker
               files={files}
@@ -496,8 +498,8 @@ export function RequestWizard(props: WizardProps) {
       {step === 2 && (
         <section className="space-y-6">
           <div>
-            <h1 className="text-2xl font-bold">Kur ir kada?</h1>
-            <p className="mt-1 text-muted">Iki pasirinkimo teikėjai matys tik gyvenvietę ir savivaldybę.</p>
+            <h1 className="text-2xl font-bold">{w.whereWhen}</h1>
+            <p className="mt-1 text-muted">{w.whereWhenHint}</p>
           </div>
 
           <Card className="space-y-4">
@@ -513,9 +515,9 @@ export function RequestWizard(props: WizardProps) {
               }
             />
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Savivaldybė" htmlFor="w-mun" error={errors.municipality}>
+              <Field label={w.municipality} htmlFor="w-mun" error={errors.municipality}>
                 <Select id="w-mun" value={s.municipality} onChange={(e) => update({ municipality: e.target.value })}>
-                  <option value="">Pasirinkite…</option>
+                  <option value="">{w.choose}</option>
                   {sortedMunicipalities.map((m) => (
                     <option key={m.code} value={m.code}>
                       {m.label}
@@ -523,25 +525,25 @@ export function RequestWizard(props: WizardProps) {
                   ))}
                 </Select>
               </Field>
-              <Field label="Gyvenvietė ar vietovė" htmlFor="w-loc" error={errors.locality} hint="Matys visi teikėjai">
-                <Input id="w-loc" value={s.locality} onChange={(e) => update({ locality: e.target.value })} placeholder="Pvz.: Paantvardys" />
+              <Field label={w.locality} htmlFor="w-loc" error={errors.locality} hint={w.localityHint}>
+                <Input id="w-loc" value={s.locality} onChange={(e) => update({ locality: e.target.value })} placeholder={w.localityPlaceholder} />
               </Field>
             </div>
             <div className="rounded-xl bg-paper p-3.5">
               <p className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-brand-700">
-                <Lock className="size-3.5" aria-hidden /> Matys tik jūsų pasirinktas teikėjas
+                <Lock className="size-3.5" aria-hidden /> {w.privateOnly}
               </p>
               <div className="space-y-4">
-                <Field label="Tikslus adresas arba kaip rasti" htmlFor="w-addr" error={errors.address}>
+                <Field label={w.address} htmlFor="w-addr" error={errors.address}>
                   <Textarea
                     id="w-addr"
                     rows={2}
                     value={s.address}
                     onChange={(e) => update({ address: e.target.value })}
-                    placeholder="Gatvė ir namo nr., arba pvz.: antra sodyba po kairės už tilto"
+                    placeholder={w.addressPlaceholder}
                   />
                 </Field>
-                <Field label="Telefonas susisiekti" htmlFor="w-phone" error={errors.contactPhone}>
+                <Field label={w.contactPhone} htmlFor="w-phone" error={errors.contactPhone}>
                   <Input
                     id="w-phone"
                     type="tel"
@@ -554,9 +556,9 @@ export function RequestWizard(props: WizardProps) {
                 </Field>
                 {s.lat !== null && (
                   <p className="text-xs text-muted">
-                    Išsaugotos vietos koordinatės – teikėjas galės atsidaryti žemėlapį.{" "}
+                    {w.coordsSaved}{" "}
                     <button type="button" className="font-semibold underline" onClick={() => update({ lat: null, lng: null })}>
-                      Pašalinti
+                      {w.removeCoords}
                     </button>
                   </p>
                 )}
@@ -565,30 +567,30 @@ export function RequestWizard(props: WizardProps) {
           </Card>
 
           <Card className="space-y-4">
-            <Field label="Ar darbas kartosis?">
+            <Field label={w.recurring}>
               <Choice
-                name="Darbo pobūdis"
+                name={w.kindLabel}
                 value={s.kind}
                 onChange={(v) => update({ kind: v })}
                 options={[
-                  { value: "once", label: "Vienkartinis" },
-                  { value: "recurring", label: "Pasikartojantis", hint: "Pvz., pjauti kas dvi savaites" },
+                  { value: "once", label: w.once },
+                  { value: "recurring", label: w.repeating, hint: w.repeatingHint },
                 ]}
               />
             </Field>
 
             {s.kind === "once" ? (
               <>
-                <Field label="Kada?">
+                <Field label={w.when}>
                   <Choice
-                    name="Kada"
+                    name={w.when}
                     columns={3}
                     value={s.timingType}
                     onChange={(v) => update({ timingType: v })}
                     options={[
-                      { value: "asap", label: "Kuo greičiau" },
-                      { value: "window", label: "Pasirinkti laiką" },
-                      { value: "flexible", label: "Laikas lankstus" },
+                      { value: "asap", label: w.asap },
+                      { value: "window", label: w.window },
+                      { value: "flexible", label: w.flexible },
                     ]}
                   />
                 </Field>
@@ -613,18 +615,18 @@ export function RequestWizard(props: WizardProps) {
                       })}
                     </div>
                     <div className="grid grid-cols-2 gap-3">
-                      <Field label="Nuo" htmlFor="w-sd">
+                      <Field label={w.from} htmlFor="w-sd">
                         <div className="flex gap-2">
                           <Input id="w-sd" type="date" min={today} value={s.window.startDate} onChange={(e) => update({ window: { ...s.window, startDate: e.target.value } })} />
                         </div>
                       </Field>
-                      <Field label="Laikas" htmlFor="w-st">
+                      <Field label={w.time} htmlFor="w-st">
                         <Input id="w-st" type="time" value={s.window.startTime} onChange={(e) => update({ window: { ...s.window, startTime: e.target.value } })} />
                       </Field>
-                      <Field label="Iki" htmlFor="w-ed">
+                      <Field label={w.to} htmlFor="w-ed">
                         <Input id="w-ed" type="date" min={s.window.startDate || today} value={s.window.endDate} onChange={(e) => update({ window: { ...s.window, endDate: e.target.value } })} />
                       </Field>
-                      <Field label="Laikas" htmlFor="w-et">
+                      <Field label={w.time} htmlFor="w-et">
                         <Input id="w-et" type="time" value={s.window.endTime} onChange={(e) => update({ window: { ...s.window, endTime: e.target.value } })} />
                       </Field>
                     </div>
@@ -634,25 +636,25 @@ export function RequestWizard(props: WizardProps) {
               </>
             ) : (
               <div className="space-y-4">
-                <Field label="Kaip dažnai?">
+                <Field label={w.howOften}>
                   <Choice
-                    name="Dažnis"
+                    name={w.frequencyLabel}
                     columns={3}
                     value={s.frequency}
                     onChange={(v) => update({ frequency: v })}
-                    options={Object.entries(FREQUENCIES).map(([value, label]) => ({ value: value as Frequency, label }))}
+                    options={Object.entries(FREQUENCY_LABELS[locale]).map(([value, label]) => ({ value: value as Frequency, label }))}
                   />
                 </Field>
                 <div className="grid grid-cols-2 gap-3">
-                  <Field label="Pradžia" htmlFor="w-ss">
+                  <Field label={w.start} htmlFor="w-ss">
                     <Input id="w-ss" type="date" min={today} value={s.seriesStart} onChange={(e) => update({ seriesStart: e.target.value })} />
                   </Field>
-                  <Field label="Pabaiga" htmlFor="w-se" optional hint="Jei nežinote – palikite tuščią">
+                  <Field label={w.end} htmlFor="w-se" optional hint={w.endHint}>
                     <Input id="w-se" type="date" min={s.seriesStart || today} value={s.seriesEnd} onChange={(e) => update({ seriesEnd: e.target.value })} />
                   </Field>
                 </div>
                 {errors.series && <p className="text-sm font-medium text-red-700">{errors.series}</p>}
-                <Alert tone="info">Teikėjai siūlys kainą už vieną apsilankymą pagal šį grafiką.</Alert>
+                <Alert tone="info">{w.perVisitInfo}</Alert>
               </div>
             )}
           </Card>
@@ -662,15 +664,15 @@ export function RequestWizard(props: WizardProps) {
       {/* 4. Peržiūra */}
       {step === 3 && (
         <section className="space-y-4">
-          <h1 className="text-2xl font-bold">{props.mode === "edit" ? "Peržiūrėkite pakeitimus" : "Patikrinkite ir paskelbkite"}</h1>
+          <h1 className="text-2xl font-bold">{props.mode === "edit" ? w.reviewEdit : w.reviewCreate}</h1>
           <Card>
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-start gap-3">
                 <CategoryBadge category={payload.category} />
                 <div>
-                  <p className="text-lg font-bold">{requestHeadline(payload.category, payload.details)}</p>
+                  <p className="text-lg font-bold">{requestHeadline(payload.category, payload.details, locale)}</p>
                   <ul className="mt-2 flex flex-wrap gap-1.5">
-                    {describeDetails(payload.category, payload.details).map((l) => (
+                    {describeDetails(payload.category, payload.details, locale).map((l) => (
                       <li key={l} className="rounded-lg bg-paper px-2 py-0.5 text-sm">
                         {l}
                       </li>
@@ -679,53 +681,53 @@ export function RequestWizard(props: WizardProps) {
                   {s.description && <p className="mt-2 whitespace-pre-line text-[15px]">{s.description}</p>}
                   {(files.length > 0 || (props.existingPhotos?.length ?? 0) - removedIds.length > 0) && (
                     <p className="mt-2 text-sm text-muted">
-                      Nuotraukų: {files.length + (props.existingPhotos?.length ?? 0) - removedIds.length}
+                      {w.photosCount(files.length + (props.existingPhotos?.length ?? 0) - removedIds.length)}
                     </p>
                   )}
                 </div>
               </div>
               <button type="button" className="shrink-0 text-sm font-semibold text-brand-700 underline" onClick={() => go(1)}>
-                Keisti
+                {t.common.change}
               </button>
             </div>
             <hr className="my-4 border-line" />
             <div className="flex items-start justify-between gap-3">
               <dl className="space-y-1.5 text-[15px]">
                 <div>
-                  <dt className="inline text-muted">Vieta: </dt>
+                  <dt className="inline text-muted">{w.place}: </dt>
                   <dd className="inline font-medium">
                     {s.locality}, {municipalityLabel(s.municipality)}
                   </dd>
                 </div>
                 <div>
-                  <dt className="inline text-muted">Laikas: </dt>
+                  <dt className="inline text-muted">{w.timeLabel}: </dt>
                   <dd className="inline font-medium">
                     {s.kind === "recurring"
-                      ? `${frequencyLabel(s.frequency)}, nuo ${formatDateKey(s.seriesStart).toLowerCase()}${s.seriesEnd ? ` iki ${formatDateKey(s.seriesEnd).toLowerCase()}` : ""}`
+                      ? `${frequencyLabel(s.frequency, locale)}, ${t.request.from(midSentence(formatDateKey(s.seriesStart, locale), locale))}${s.seriesEnd ? ` ${t.request.until(midSentence(formatDateKey(s.seriesEnd, locale), locale))}` : ""}`
                       : formatTiming({
                           type: s.timingType,
                           windowStart: s.timingType === "window" ? vilniusToDate(s.window.startDate, s.window.startTime).toISOString() : null,
                           windowEnd: s.timingType === "window" ? vilniusToDate(s.window.endDate, s.window.endTime).toISOString() : null,
-                        })}
+                        }, locale)}
                   </dd>
                 </div>
                 <div className="rounded-lg bg-paper p-2.5 text-sm">
                   <p className="flex items-center gap-1 font-semibold text-brand-700">
-                    <Lock className="size-3.5" aria-hidden /> Tik pasirinktam teikėjui
+                    <Lock className="size-3.5" aria-hidden /> {w.onlyChosen}
                   </p>
                   <p className="mt-1">{s.address}</p>
                   <p>{s.contactPhone}</p>
                 </div>
               </dl>
               <button type="button" className="shrink-0 text-sm font-semibold text-brand-700 underline" onClick={() => go(2)}>
-                Keisti
+                {t.common.change}
               </button>
             </div>
           </Card>
 
           {props.mode === "edit" && props.hasOffers && (
             <Alert tone="warning">
-              Jau turite pasiūlymų. Išsaugojus pakeitimus teikėjams reikės patvirtinti kainą iš naujo – iki tol jų pasiūlymų priimti nebus galima.
+              {w.hasOffersWarning}
             </Alert>
           )}
 
@@ -734,17 +736,15 @@ export function RequestWizard(props: WizardProps) {
           {user || props.mode === "edit" ? (
             <Button size="lg" className="w-full" onClick={publish} loading={submitting}>
               <Send className="size-5" aria-hidden />
-              {props.mode === "edit" ? "Išsaugoti pakeitimus" : "Paskelbti užklausą"}
+              {props.mode === "edit" ? w.saveChanges : w.publish}
             </Button>
           ) : (
             <Card>
-              <p className="font-bold">Liko vienas žingsnis – paskyra</p>
-              <p className="mb-4 mt-1 text-sm text-muted">
-                Ji reikalinga, kad galėtumėte matyti pasiūlymus ir gauti pranešimus. Jūsų įvesti duomenys neprarandami.
-              </p>
+              <p className="font-bold">{w.accountStep}</p>
+              <p className="mb-4 mt-1 text-sm text-muted">{w.accountStepText}</p>
               <AuthForm
                 defaults={{ phone: s.contactPhone }}
-                submitLabel={{ register: "Sukurti paskyrą ir paskelbti", login: "Prisijungti ir paskelbti" }}
+                submitLabel={{ register: w.registerAndPublish, login: w.loginAndPublish }}
                 onSuccess={async (u: UserDTO) => {
                   setUser({ name: u.name, phone: u.phone });
                   await publish();
@@ -753,7 +753,7 @@ export function RequestWizard(props: WizardProps) {
             </Card>
           )}
           <p className="text-center text-xs text-muted">
-            Apmokėjimą už darbą sutvarkysite tiesiogiai su pasirinktu teikėju.
+            {w.paymentNote}
           </p>
         </section>
       )}
@@ -762,20 +762,20 @@ export function RequestWizard(props: WizardProps) {
       {step < 3 && (
         <div className="sticky bottom-20 z-10 mt-6 flex gap-2 rounded-2xl bg-paper/90 py-2 backdrop-blur md:static md:bg-transparent md:p-0">
           {step > 0 && (
-            <Button type="button" variant="outline" size="lg" onClick={() => go(step - 1)} aria-label="Atgal">
+            <Button type="button" variant="outline" size="lg" onClick={() => go(step - 1)} aria-label={t.common.back}>
               <ChevronLeft className="size-5" aria-hidden />
-              <span className="hidden sm:inline">Atgal</span>
+              <span className="hidden sm:inline">{t.common.back}</span>
             </Button>
           )}
           <Button type="button" size="lg" className="flex-1" onClick={() => go(step + 1)}>
-            {step === 2 ? "Peržiūrėti" : "Toliau"} <ChevronRight className="size-5" aria-hidden />
+            {step === 2 ? w.review : t.common.next} <ChevronRight className="size-5" aria-hidden />
           </Button>
         </div>
       )}
       {step === 3 && (
         <div className="mt-3">
           <Button type="button" variant="ghost" onClick={() => go(2)}>
-            <ChevronLeft className="size-4" aria-hidden /> Atgal
+            <ChevronLeft className="size-4" aria-hidden /> {t.common.back}
           </Button>
         </div>
       )}

@@ -1,12 +1,15 @@
 import Link from "next/link";
 import { ChevronRight, Clock, MapPin, Repeat } from "lucide-react";
 import type { RequestListItem } from "@/shared/types";
-import { formatDateKey, formatRelativePast, formatTiming, frequencyLabel } from "@/shared/format";
+import { requestHeadline } from "@/shared/categories";
+import { formatDateKey, formatRelativePast, formatTiming, frequencyLabel, midSentence } from "@/shared/format";
+import { getI18n } from "@/i18n/server";
 import { CategoryBadge } from "./category-icon";
 import { RequestStatusBadge } from "./status";
 import { DemoBadge } from "./ui";
 
-export function RequestListCard({ item }: { item: RequestListItem }) {
+export async function RequestListCard({ item }: { item: RequestListItem }) {
+  const { locale, t } = await getI18n();
   const href = item.activeAgreementId ? `/susitarimai/${item.activeAgreementId}` : `/uzklausos/${item.id}`;
   return (
     <Link
@@ -16,7 +19,7 @@ export function RequestListCard({ item }: { item: RequestListItem }) {
       <CategoryBadge category={item.category} />
       <span className="min-w-0 flex-1">
         <span className="flex flex-wrap items-center gap-2">
-          <span className="font-bold">{item.headline}</span>
+          <span className="font-bold">{requestHeadline(item.category, item.details, locale)}</span>
           <RequestStatusBadge status={item.status} offerCount={item.offerCount} />
           {item.isDemo && <DemoBadge />}
         </span>
@@ -28,16 +31,16 @@ export function RequestListCard({ item }: { item: RequestListItem }) {
           {item.recurrence.frequency ? (
             <span className="inline-flex items-center gap-1">
               <Repeat className="size-3.5" aria-hidden />
-              {frequencyLabel(item.recurrence.frequency)}
-              {item.recurrence.startDate && ` nuo ${formatDateKey(item.recurrence.startDate).toLowerCase()}`}
+              {frequencyLabel(item.recurrence.frequency, locale)}
+              {item.recurrence.startDate && ` ${t.request.from(midSentence(formatDateKey(item.recurrence.startDate, locale), locale))}`}
             </span>
           ) : (
             <span className="inline-flex items-center gap-1">
               <Clock className="size-3.5" aria-hidden />
-              {formatTiming(item.timing)}
+              {formatTiming(item.timing, locale)}
             </span>
           )}
-          <span>Paskelbta {formatRelativePast(item.createdAt)}</span>
+          <span>{t.request.posted(formatRelativePast(item.createdAt, locale))}</span>
         </span>
       </span>
       <ChevronRight className="size-5 shrink-0 text-stone-400 group-hover:text-brand-600" aria-hidden />

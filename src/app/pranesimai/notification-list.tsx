@@ -6,8 +6,10 @@ import { api } from "@/lib/api-client";
 import { formatRelativePast } from "@/shared/format";
 import type { NotificationDTO } from "@/shared/types";
 import { Button, cx } from "@/components/ui";
+import { useI18n } from "@/i18n/client";
 
 export function NotificationList({ items }: { items: NotificationDTO[] }) {
+  const { t, locale } = useI18n();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const unread = items.filter((n) => !n.read).length;
@@ -41,7 +43,7 @@ export function NotificationList({ items }: { items: NotificationDTO[] }) {
               }
             }}
           >
-            Pažymėti visus perskaitytais
+            {t.notifications.markAll}
           </Button>
         </div>
       )}
@@ -57,9 +59,9 @@ export function NotificationList({ items }: { items: NotificationDTO[] }) {
               <span className="min-w-0 flex-1">
                 <span className={cx("block", n.read ? "font-medium" : "font-bold")}>{n.title}</span>
                 {n.body && <span className="mt-0.5 block text-sm text-muted">{n.body}</span>}
-                <span className="mt-1 block text-xs text-muted">{formatRelativePast(n.createdAt)}</span>
+                <span className="mt-1 block text-xs text-muted">{formatRelativePast(n.createdAt, locale)}</span>
               </span>
-              {!n.read && <span className="sr-only">Neperskaitytas</span>}
+              {!n.read && <span className="sr-only">{t.notifications.unread}</span>}
             </button>
           </li>
         ))}

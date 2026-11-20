@@ -6,11 +6,14 @@ export const BASE = process.env.TEST_BASE_URL ?? "http://localhost:3100";
 
 export class Device {
   cookie = "";
+  /** Sąsajos kalba (slapukas „kviki_lang“). */
+  lang: "lt" | "en" | null = null;
   constructor(readonly label: string) {}
 
   async call<T = any>(method: string, path: string, body?: unknown, extraHeaders: Record<string, string> = {}): Promise<{ status: number; body: T }> {
     const headers: Record<string, string> = { Origin: BASE, ...extraHeaders };
-    if (this.cookie) headers.Cookie = this.cookie;
+    const cookies = [this.cookie, this.lang ? `kviki_lang=${this.lang}` : ""].filter(Boolean);
+    if (cookies.length) headers.Cookie = cookies.join("; ");
     let payload: BodyInit | undefined;
     if (body instanceof FormData) payload = body;
     else if (body !== undefined) {

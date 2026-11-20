@@ -2,6 +2,9 @@ import { defaultDetails, type CategoryId, type DetailsByCategory } from "@/share
 import { normalizePhone, requestInputSchema, type RequestInput } from "@/shared/schemas";
 import { addDaysToKey, vilniusDateKey, vilniusTimeKey, vilniusToDate, vilniusWeekday, type Frequency } from "@/shared/time";
 import type { RequestOwnerView } from "@/shared/types";
+import type { Dict } from "@/i18n";
+
+type W = Dict["wizard"];
 
 export interface WizardState {
   category: CategoryId | null;
@@ -22,7 +25,6 @@ export interface WizardState {
   seriesEnd: string;
 }
 
-export const STEPS = ["Darbas", "Apimtis", "Vieta ir laikas", "Peržiūra"] as const;
 
 export function emptyState(phone = ""): WizardState {
   const today = vilniusDateKey(new Date());
@@ -55,10 +57,10 @@ export function emptyState(phone = ""): WizardState {
 /** Paprastas spėjimas iš laisvo teksto, kurią kategoriją pasiūlyti. */
 export function guessCategory(text: string): CategoryId | null {
   const t = text.toLowerCase();
-  if (/(žol|zol|pjau|piev|vej|šienau|sienau|trimer)/.test(t)) return "mowing";
-  if (/(gen[eė]|gyvatvor|medž|medz|krūm|krum|nupjauti medį)/.test(t)) return "pruning";
-  if (/(lap|kiem|tvark|ravė|rave|šiukš|siuks|šak)/.test(t)) return "yard";
-  if (/(nešt|nest|krau|padė|pade|rank|perkraust|malk)/.test(t)) return "helper";
+  if (/(žol|zol|pjau|piev|vej|šienau|sienau|trimer|mow|grass|lawn|meadow)/.test(t)) return "mowing";
+  if (/(gen[eė]|gyvatvor|medž|medz|krūm|krum|nupjauti medį|prun|hedge|tree|bush|trim)/.test(t)) return "pruning";
+  if (/(lap|kiem|tvark|ravė|rave|šiukš|siuks|šak|leaves|yard|garden|clean|weed|rubbish)/.test(t)) return "yard";
+  if (/(nešt|nest|krau|padė|pade|rank|perkraust|malk|carry|load|help|move|firewood)/.test(t)) return "helper";
   return null;
 }
 
@@ -120,56 +122,57 @@ export function fromRequest(r: RequestOwnerView): WizardState {
 export type StepErrors = Partial<Record<string, string>>;
 
 /** Žingsnio patikra prieš einant toliau. Grąžina klaidas pagal lauką. */
-export function validateStep(step: number, s: WizardState, now = new Date()): StepErrors {
+export function validateStep(step: number, s: WizardState, w: W, now = new Date()): StepErrors {
   const e: StepErrors = {};
   if (step === 0) {
-    if (!s.category) e.category = "Pasirinkite, kokios pagalbos reikia";
+    if (!s.category) e.category = w.errCategory;
   }
   if (step === 1) {
     const c = s.category;
     if ((c === "helper" || c === "other") && s.description.trim().length < 10) {
-      e.description = "Trumpai aprašykite, ką reikės padaryti (bent kelis žodžius)";
+      e.description = w.errDescription;
     }
     if ((c === "mowing" || c === "yard") && !s.areaUnknown) {
       const a = s.details[c].areaAres;
-      if (a === null || !(a > 0)) e.area = "Įrašykite apytikslį plotą arba pažymėkite „Nežinau“";
+      if (a === null || !(a > 0)) e.area = w.errArea;
     }
     if (c === "helper") {
       const d = s.details.helper;
-      if (!(d.peopleCount >= 1 && d.peopleCount <= 20)) e.people = "Nuo 1 iki 20 žmonių";
+      if (!(d.peopleCount >= 1 && d.peopleCount <= 20)) e.people = w.errPeople;
     }
   }
   if (step === 2) {
-    if (!s.municipality) e.municipality = "Pasirinkite savivaldybę";
-    if (s.locality.trim().length < 2) e.locality = "Įrašykite gyvenvietę ar vietovę";
-    if (s.address.trim().length < 3) e.address = "Įrašykite adresą arba kaip rasti vietą";
-    if (!normalizePhone(s.contactPhone)) e.contactPhone = "Įrašykite telefono numerį, pvz. +370 600 00000";
+    if (!s.municipality) e.municipality = w.errMunicipality;
+    if (s.locality.trim().length < 2) e.locality = w.errLocality;
+    if (s.address.trim().length < 3) e.address = w.errAddress;
+    if (!normalizePhone(s.contactPhone)) e.contactPhone = w.errPhone;
     if (s.kind === "once" && s.timingType === "window") {
-      const w = s.window;
-      if (!w.startDate || !w.endDate || !w.startTime || !w.endTime) e.window = "Nurodykite pradžią ir pabaigą";
+      const win = s.window;
+      if (!win.startDate || !win.endDate || !win.startTime || !win.endTime) e.window = w.errWindowMissing;
       else {
-        const start = vilniusToDate(w.startDate, w.startTime);
-        const end = vilniusToDate(w.endDate, w.endTime);
-        if (end <= start) e.window = "Pabaiga turi būti vėliau nei pradžia";
-        else if (end < now) e.window = "Šis laikas jau praėjo";
+        const start = vilniusToDate(win.startDate, win.startTime);
+        const end = vilniusToDate(win.endDate, win.endTime);
+        if (end <= start) e.window = w.errWindowOrder;
+        else if (end < now) e.window = w.errWindowPast;
       }
     }
     if (s.kind === "recurring") {
       const today = vilniusDateKey(now);
-      if (!s.seriesStart) e.series = "Nurodykite pradžią";
-      else if (s.seriesStart < today) e.series = "Pradžia negali būti praeityje";
-      else if (s.seriesEnd && s.seriesEnd < s.seriesStart) e.series = "Pabaiga turi būti vėliau nei pradžia";
+      if (!s.seriesStart) e.series = w.errSeriesStart;
+      else if (s.seriesStart < today) e.series = w.errSeriesPast;
+      else if (s.seriesEnd && s.seriesEnd < s.seriesStart) e.series = w.errWindowOrder;
     }
   }
   if (step === 3) {
     const parsed = requestInputSchema.safeParse(toPayload(s));
-    if (!parsed.success) e.form = parsed.error.issues[0]?.message ?? "Patikrinkite įvestus duomenis";
+    if (!parsed.success) e.form = parsed.error.issues[0]?.message ?? w.errForm;
   }
   return e;
 }
 
 /** Greiti laiko pasirinkimai, pvz. „Šį savaitgalį“. */
-export function quickWindows(now = new Date()) {
+export function quickWindows(now = new Date(), w?: Pick<W, "quickToday" | "quickTomorrow" | "quickTodayTomorrow" | "quickWeekend">) {
+  const L = w ?? { quickToday: "Šiandien", quickTomorrow: "Rytoj", quickTodayTomorrow: "Šiandien arba rytoj", quickWeekend: "Šį savaitgalį" };
   const today = vilniusDateKey(now);
   const hour = Number(vilniusTimeKey(now).slice(0, 2));
   const fromToday = `${String(Math.min(Math.max(hour + 1, 8), 21)).padStart(2, "0")}:00`;
@@ -179,13 +182,13 @@ export function quickWindows(now = new Date()) {
   const sunday = wd === 7 ? today : addDaysToKey(saturday, 1);
   const lateToday = hour >= 20;
   return [
-    ...(lateToday ? [] : [{ label: "Šiandien", value: { startDate: today, startTime: fromToday, endDate: today, endTime: "21:00" } }]),
-    { label: "Rytoj", value: { startDate: tomorrow, startTime: "08:00", endDate: tomorrow, endTime: "21:00" } },
+    ...(lateToday ? [] : [{ label: L.quickToday, value: { startDate: today, startTime: fromToday, endDate: today, endTime: "21:00" } }]),
+    { label: L.quickTomorrow, value: { startDate: tomorrow, startTime: "08:00", endDate: tomorrow, endTime: "21:00" } },
     ...(lateToday
       ? []
-      : [{ label: "Šiandien arba rytoj", value: { startDate: today, startTime: fromToday, endDate: tomorrow, endTime: "21:00" } }]),
+      : [{ label: L.quickTodayTomorrow, value: { startDate: today, startTime: fromToday, endDate: tomorrow, endTime: "21:00" } }]),
     {
-      label: "Šį savaitgalį",
+      label: L.quickWeekend,
       value: { startDate: wd === 6 && !lateToday ? today : saturday, startTime: wd === 6 && !lateToday ? fromToday : "08:00", endDate: sunday, endTime: "21:00" },
     },
   ];

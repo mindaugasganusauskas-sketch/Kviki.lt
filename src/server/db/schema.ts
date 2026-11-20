@@ -39,6 +39,8 @@ export const users = pgTable("users", {
   activeMode: modeEnum("active_mode").notNull().default("client"),
   isDemo: boolean("is_demo").notNull().default(false),
   termsAcceptedAt: ts("terms_accepted_at"),
+  // Sąsajos kalba: pagal ją rašomi pranešimai ir el. laiškai.
+  locale: text("locale").notNull().default("lt"),
   // Ištrinta paskyra anonimizuojama: lieka tik tai, ko reikia kitos šalies užsakymų istorijai.
   deletedAt: ts("deleted_at"),
   createdAt: createdAt(),
@@ -272,6 +274,8 @@ export const notifications = pgTable(
     type: text("type").notNull(),
     title: text("title").notNull(),
     body: text("body").notNull().default(""),
+    // Pranešimo tekstas sudaromas rodant, gavėjo kalba, iš tipo ir šių parametrų.
+    params: jsonb("params").$type<Record<string, unknown>>(),
     link: text("link").notNull(),
     // Pakartotinis siuntimas su tuo pačiu raktu nesukuria antro pranešimo.
     dedupeKey: text("dedupe_key").unique(),

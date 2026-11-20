@@ -1,37 +1,30 @@
 import type { Metadata } from "next";
+import { getI18n } from "@/i18n/server";
 import { ButtonLink, Card, PageHeader } from "@/components/ui";
 
-export const metadata: Metadata = { title: "Kaip tai veikia" };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getI18n()).t.titles.how };
+}
 
-const CLIENT = [
-  ["Aprašykite darbą", "Pasirinkite, ko reikia, atsakykite į kelis klausimus, pridėkite nuotrauką. Nurodykite vietą ir laiką."],
-  ["Palaukite pasiūlymų", "Teikėjai jūsų savivaldybėje pasiūlo galutinę kainą, pradžios laiką ir ką įskaičiuoja. Apie kiekvieną pranešime."],
-  ["Pasirinkite", "Palyginkite pagal kainą ar ankstyviausią laiką ir patvirtinkite. Tik tada teikėjas pamato tikslų adresą ir telefoną."],
-  ["Užbaikite", "Teikėjas pažymi darbą atliktu, jūs patvirtinate rezultatą arba pažymite problemą."],
-];
-const PROVIDER = [
-  ["Užpildykite profilį", "Veiklos forma (įmonė ar individuali veikla), paslaugos ir savivaldybės, kuriose dirbate."],
-  ["Matykite darbus šalia", "Rodome atviras užklausas, kurios atitinka jūsų paslaugas ir savivaldybes."],
-  ["Siūlykite savo kainą", "Galutinė kaina, siūloma pradžia ir kas įskaičiuota. Kol klientas nepasirinko – galite keisti ar atsiimti."],
-  ["Atlikite darbą", "Priimtas darbas atsiranda skiltyje „Mano darbai“ su adresu ir kliento kontaktu."],
-];
-
-export default function HowPage() {
+export default async function HowPage() {
+  const { t } = await getI18n();
+  const h = t.how;
+  const sections: [string, string[][]][] = [
+    [h.clients, h.clientSteps],
+    [h.providers, h.providerSteps],
+  ];
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <PageHeader title="Kaip tai veikia" subtitle="Kviki sujungia žmones, kuriems reikia pagalbos kieme ar ūkyje, su netoliese dirbančiais teikėjais." />
-      {[
-        ["Klientams", CLIENT],
-        ["Teikėjams", PROVIDER],
-      ].map(([title, steps]) => (
-        <Card key={title as string}>
-          <h2 className="text-lg font-bold">{title as string}</h2>
+      <PageHeader title={t.titles.how} subtitle={h.subtitle} />
+      {sections.map(([title, steps]) => (
+        <Card key={title}>
+          <h2 className="text-lg font-bold">{title}</h2>
           <ol className="mt-3 space-y-3">
-            {(steps as string[][]).map(([t, d], i) => (
-              <li key={t} className="flex gap-3">
+            {steps.map(([name, text], i) => (
+              <li key={name} className="flex gap-3">
                 <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-brand-100 text-sm font-bold text-brand-800">{i + 1}</span>
                 <span>
-                  <span className="font-semibold">{t}.</span> <span className="text-stone-700">{d}</span>
+                  <span className="font-semibold">{name}.</span> <span className="text-stone-700">{text}</span>
                 </span>
               </li>
             ))}
@@ -39,12 +32,14 @@ export default function HowPage() {
         </Card>
       ))}
       <Card>
-        <h2 className="text-lg font-bold">Apmokėjimas</h2>
-        <p className="mt-2 text-stone-700">Šiuo metu už darbą atsiskaitote tiesiogiai su teikėju. Kviki mokėjimų nerenka.</p>
+        <h2 className="text-lg font-bold">{h.paymentTitle}</h2>
+        <p className="mt-2 text-stone-700">{h.paymentText}</p>
       </Card>
       <div className="flex flex-wrap gap-2">
-        <ButtonLink href="/nauja-uzklausa">Aprašyti darbą</ButtonLink>
-        <ButtonLink href="/registracija?teikejas=1" variant="outline">Tapti teikėju</ButtonLink>
+        <ButtonLink href="/nauja-uzklausa">{h.describe}</ButtonLink>
+        <ButtonLink href="/registracija?teikejas=1" variant="outline">
+          {h.become}
+        </ButtonLink>
       </div>
     </div>
   );

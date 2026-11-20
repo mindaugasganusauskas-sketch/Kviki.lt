@@ -86,8 +86,7 @@ export async function submitOffer(actor: Actor, requestId: string, input: unknow
       {
         userId: r.clientId,
         type: isNew ? "new_offer" : "offer_updated",
-        title: isNew ? `Naujas pasiūlymas: ${price}` : `Pasiūlymas atnaujintas: ${price}`,
-        body: `${profile.displayName} – ${requestHeadline(r.category, r.details)}`,
+        params: { category: r.category, details: r.details, priceCents: row.priceCents, perVisit: r.frequency !== null, providerName: profile.displayName },
         link: `/uzklausos/${r.id}`,
         dedupeKey: `offer:${row.id}:v${row.version}`,
         email: true,
@@ -121,8 +120,7 @@ export async function withdrawOffer(actor: Actor, offerId: string): Promise<Offe
       {
         userId: r.clientId,
         type: "offer_withdrawn",
-        title: `${profile.displayName} atsiėmė pasiūlymą`,
-        body: requestHeadline(r.category, r.details),
+        params: { category: r.category, details: r.details, providerName: profile.displayName },
         link: `/uzklausos/${r.id}`,
         dedupeKey: `offer_withdrawn:${row.id}:v${row.version}`,
       },
@@ -135,6 +133,8 @@ export interface MyOfferItem {
   offer: OfferDTO;
   requestId: string;
   headline: string;
+  category: string;
+  details: Record<string, unknown>;
   locality: string;
   municipalityLabel: string;
   requestStatus: RequestStatus;
@@ -158,6 +158,8 @@ export async function listMyOffers(actor: Actor): Promise<MyOfferItem[]> {
       offer: toOfferDTO(o, p, r),
       requestId: r.id,
       headline: requestHeadline(r.category, r.details),
+      category: r.category,
+      details: r.details,
       locality: r.locality,
       municipalityLabel: municipalityLabel(r.municipality),
       requestStatus: r.status,

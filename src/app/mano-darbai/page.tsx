@@ -10,15 +10,20 @@ import { AutoRefresh } from "@/components/auto-refresh";
 import { ProviderGate } from "@/components/provider-gate";
 import { OfferStatusBadge } from "@/components/status";
 import { ButtonLink, EmptyState, PageHeader, SectionTitle } from "@/components/ui";
+import { getI18n } from "@/i18n/server";
+import { requestHeadline } from "@/shared/categories";
 
-export const metadata: Metadata = { title: "Mano darbai" };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getI18n()).t.titles.myJobs };
+}
 
 export default async function MyJobsPage() {
   const actor = await requirePageActor("/mano-darbai");
+  const { locale, t } = await getI18n();
   if (!actor.isProvider) {
     return (
       <div>
-        <PageHeader title="Mano darbai" />
+        <PageHeader title={t.titles.myJobs} />
         <ProviderGate />
       </div>
     );
@@ -34,18 +39,18 @@ export default async function MyJobsPage() {
   return (
     <div>
       <AutoRefresh seconds={30} />
-      <PageHeader title="Mano darbai" />
+      <PageHeader title={t.titles.myJobs} />
       {empty ? (
         <EmptyState
           icon={<ListChecks className="size-6" />}
-          title="Kol kas sutartų darbų nėra"
-          action={<ButtonLink href="/darbai-salia">Žiūrėti darbus šalia</ButtonLink>}
+          title={t.provider.myJobsEmptyTitle}
+          action={<ButtonLink href="/darbai-salia">{t.provider.seeNearby}</ButtonLink>}
         >
-          Pateikite pasiūlymą – kai klientas jį pasirinks, darbas atsiras čia.
+          {t.provider.myJobsEmptyText}
         </EmptyState>
       ) : (
         <>
-          <SectionTitle>Sutarti darbai</SectionTitle>
+          <SectionTitle>{t.provider.agreedJobs}</SectionTitle>
           {active.length ? (
             <div className="grid gap-3">
               {active.map((a) => (
@@ -53,12 +58,12 @@ export default async function MyJobsPage() {
               ))}
             </div>
           ) : (
-            <p className="text-muted">Šiuo metu aktyvių užsakymų nėra.</p>
+            <p className="text-muted">{t.provider.noActive}</p>
           )}
 
           {waiting.length > 0 && (
             <>
-              <SectionTitle>Laukia kliento sprendimo</SectionTitle>
+              <SectionTitle>{t.provider.awaitingDecision}</SectionTitle>
               <ul className="grid gap-2">
                 {waiting.map((o) => (
                   <li key={o.offer.id}>
@@ -68,12 +73,12 @@ export default async function MyJobsPage() {
                     >
                       <span className="min-w-0 flex-1">
                         <span className="flex flex-wrap items-center gap-2 font-bold">
-                          {o.headline}
+                          {requestHeadline(o.category, o.details, locale)}
                           <OfferStatusBadge status={o.offer.status} needsReconfirmation={o.offer.needsReconfirmation} />
                         </span>
                         <span className="mt-0.5 block text-sm text-muted">
-                          {o.locality}, {o.municipalityLabel} · {formatPriceLabel(o.offer.priceCents, o.offer.perVisit)} ·{" "}
-                          {formatDateTime(o.offer.startAt)}
+                          {o.locality}, {o.municipalityLabel} · {formatPriceLabel(o.offer.priceCents, o.offer.perVisit, locale)} ·{" "}
+                          {formatDateTime(o.offer.startAt, locale)}
                         </span>
                       </span>
                       <ChevronRight className="size-5 text-stone-400" aria-hidden />
@@ -86,7 +91,7 @@ export default async function MyJobsPage() {
 
           {(pastAgreements.length > 0 || closedOffers.length > 0) && (
             <>
-              <SectionTitle>Istorija</SectionTitle>
+              <SectionTitle>{t.provider.history}</SectionTitle>
               <div className="grid gap-2">
                 {pastAgreements.map((a) => (
                   <AgreementListCard key={a.id} item={a} />
@@ -98,8 +103,8 @@ export default async function MyJobsPage() {
                     className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-white/60 p-3.5 text-sm hover:bg-white"
                   >
                     <span>
-                      <span className="font-semibold">{o.headline}</span>
-                      <span className="text-muted"> · {o.locality} · {formatPriceLabel(o.offer.priceCents, o.offer.perVisit)}</span>
+                      <span className="font-semibold">{requestHeadline(o.category, o.details, locale)}</span>
+                      <span className="text-muted"> · {o.locality} · {formatPriceLabel(o.offer.priceCents, o.offer.perVisit, locale)}</span>
                     </span>
                     <OfferStatusBadge status={o.offer.status} />
                   </Link>

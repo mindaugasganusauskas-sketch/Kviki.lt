@@ -70,7 +70,7 @@ export async function deleteAccount(actor: Actor, input: unknown): Promise<void>
         holders.map(({ providerId }) => ({
           userId: providerId,
           type: "request_cancelled",
-          title: `Klientas atšaukė užklausą: ${requestHeadline(r.category, r.details)}`,
+          params: { category: r.category, details: r.details },
           link: `/darbai-salia/${r.id}`,
           dedupeKey: `request_cancelled:${r.id}:${providerId}`,
         })),

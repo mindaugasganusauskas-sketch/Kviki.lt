@@ -4,6 +4,7 @@ import { useState } from "react";
 import { LocateFixed } from "lucide-react";
 import { guessMunicipality } from "@/shared/municipalities";
 import { Spinner } from "../ui";
+import { useI18n } from "@/i18n/client";
 
 export interface FoundLocation {
   lat: number;
@@ -18,6 +19,7 @@ export interface FoundLocation {
  * Atsisakius leidimo viską galima įvesti ranka.
  */
 export function LocationButton({ onFound }: { onFound: (loc: FoundLocation) => void }) {
+  const { t } = useI18n();
   const [state, setState] = useState<"idle" | "busy" | "ok" | "denied" | "error">("idle");
 
   function locate() {
@@ -66,13 +68,13 @@ export function LocationButton({ onFound }: { onFound: (loc: FoundLocation) => v
         className="inline-flex h-11 items-center gap-2 rounded-xl border border-brand-200 bg-brand-50 px-4 text-sm font-semibold text-brand-800 hover:bg-brand-100 disabled:opacity-60"
       >
         {state === "busy" ? <Spinner className="size-4" /> : <LocateFixed className="size-5" aria-hidden />}
-        Naudoti mano vietą
+        {t.location.useMine}
       </button>
-      {state === "ok" && <p className="mt-1.5 text-xs text-brand-700">Vieta nustatyta. Patikrinkite ir, jei reikia, pataisykite laukus.</p>}
+      {state === "ok" && <p className="mt-1.5 text-xs text-brand-700">{t.location.found}</p>}
       {state === "denied" && (
-        <p className="mt-1.5 text-xs text-muted">Vietos nustatymas išjungtas – nieko tokio, įveskite vietą ranka.</p>
+        <p className="mt-1.5 text-xs text-muted">{t.location.denied}</p>
       )}
-      {state === "error" && <p className="mt-1.5 text-xs text-muted">Nepavyko nustatyti vietos. Įveskite ją ranka.</p>}
+      {state === "error" && <p className="mt-1.5 text-xs text-muted">{t.location.error}</p>}
     </div>
   );
 }

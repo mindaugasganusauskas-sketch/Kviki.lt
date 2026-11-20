@@ -1,5 +1,6 @@
-// Paslaugų kategorijos ir kiekvienai kategorijai aktualūs klausimai.
+// Paslaugų kategorijos ir kiekvienai kategorijai aktualūs klausimai, abiem kalbomis.
 // Modulis be priklausomybių nuo serverio ar React – tinka ir mobiliajai programėlei.
+import { DEFAULT_LOCALE, type Locale } from "./locale";
 
 export const CATEGORY_IDS = ["mowing", "yard", "pruning", "helper", "other"] as const;
 export type CategoryId = (typeof CATEGORY_IDS)[number];
@@ -10,22 +11,36 @@ export interface CategoryInfo {
   hint: string;
 }
 
-export const CATEGORIES: readonly CategoryInfo[] = [
-  { id: "mowing", label: "Žolės pjovimas", hint: "Pievos, vejos, pakelės" },
-  { id: "yard", label: "Kiemo tvarkymas", hint: "Lapai, šakos, šiukšlės, ravėjimas" },
-  { id: "pruning", label: "Medžių ar gyvatvorių genėjimas", hint: "Vaismedžiai, gyvatvorės, krūmai" },
-  { id: "helper", label: "Pagalbiniai darbai", hint: "Reikia rankų: nešti, krauti, padėti" },
-  { id: "other", label: "Kitas darbas", hint: "Aprašykite savais žodžiais" },
-];
+const CATEGORY_TEXT: Record<Locale, Record<CategoryId, { label: string; hint: string }>> = {
+  lt: {
+    mowing: { label: "Žolės pjovimas", hint: "Pievos, vejos, pakelės" },
+    yard: { label: "Kiemo tvarkymas", hint: "Lapai, šakos, šiukšlės, ravėjimas" },
+    pruning: { label: "Medžių ar gyvatvorių genėjimas", hint: "Vaismedžiai, gyvatvorės, krūmai" },
+    helper: { label: "Pagalbiniai darbai", hint: "Reikia rankų: nešti, krauti, padėti" },
+    other: { label: "Kitas darbas", hint: "Aprašykite savais žodžiais" },
+  },
+  en: {
+    mowing: { label: "Grass mowing", hint: "Meadows, lawns, roadsides" },
+    yard: { label: "Yard clean-up", hint: "Leaves, branches, rubbish, weeding" },
+    pruning: { label: "Tree or hedge pruning", hint: "Fruit trees, hedges, bushes" },
+    helper: { label: "Helping hands", hint: "Carrying, loading, lending a hand" },
+    other: { label: "Other job", hint: "Describe it in your own words" },
+  },
+};
 
-const categoryById = new Map(CATEGORIES.map((c) => [c.id, c]));
+export function categoriesFor(locale: Locale = DEFAULT_LOCALE): CategoryInfo[] {
+  return CATEGORY_IDS.map((id) => ({ id, ...CATEGORY_TEXT[locale][id] }));
+}
 
-export function categoryLabel(id: string): string {
-  return categoryById.get(id as CategoryId)?.label ?? "Darbas";
+/** Lietuviškas sąrašas (suderinamumui). */
+export const CATEGORIES: readonly CategoryInfo[] = categoriesFor("lt");
+
+export function categoryLabel(id: string, locale: Locale = DEFAULT_LOCALE): string {
+  return CATEGORY_TEXT[locale][id as CategoryId]?.label ?? (locale === "en" ? "Job" : "Darbas");
 }
 
 export function isCategoryId(id: string): id is CategoryId {
-  return categoryById.has(id as CategoryId);
+  return (CATEGORY_IDS as readonly string[]).includes(id);
 }
 
 // --- Kategorijų detalės -----------------------------------------------------
@@ -59,6 +74,31 @@ export const PRUNING_TARGETS = {
   bushes: "Krūmai",
 } as const;
 export type PruningTarget = keyof typeof PRUNING_TARGETS;
+
+/** Pasirinkimų tekstai abiem kalbomis (raktai sutampa su lietuviškais). */
+export const OPTION_TEXT = {
+  lt: { grass: GRASS_HEIGHTS, equipment: EQUIPMENT, yardTasks: YARD_TASKS, pruning: PRUNING_TARGETS },
+  en: {
+    grass: { low: "Short, under 10 cm", ankle: "Ankle-high", knee: "Knee-high", high: "Higher than knees" },
+    equipment: { provider: "Provider's equipment", client: "My equipment, just need a person" },
+    yardTasks: {
+      leaves: "Rake leaves",
+      branches: "Collect branches",
+      weeding: "Weeding",
+      debris: "Take away rubbish",
+      cleaning: "Tidy up after winter or building work",
+    },
+    pruning: { trees: "Trees", hedge: "Hedge", bushes: "Bushes" },
+  },
+} as const satisfies Record<
+  Locale,
+  {
+    grass: Record<GrassHeight, string>;
+    equipment: Record<Equipment, string>;
+    yardTasks: Record<YardTask, string>;
+    pruning: Record<PruningTarget, string>;
+  }
+>;
 
 export interface MowingDetails {
   areaAres: number | null;
@@ -108,29 +148,40 @@ export function defaultDetails<C extends CategoryId>(category: C): DetailsByCate
   return defaults[category];
 }
 
-function formatAres(a: number): string {
-  const n = Number.isInteger(a) ? String(a) : String(a).replace(".", ",");
-  return `apie ${n} a`;
+function num(n: number, locale: Locale): string {
+  const s = Number.isInteger(n) ? String(n) : String(n);
+  return locale === "lt" ? s.replace(".", ",") : s;
+}
+
+function formatAres(a: number, locale: Locale): string {
+  return locale === "en" ? `about ${num(a, locale)} ares` : `apie ${num(a, locale)} a`;
+}
+
+function people(n: number, locale: Locale): string {
+  if (locale === "en") return `${n} ${n === 1 ? "person" : "people"}`;
+  return `${n} ${n === 1 ? "žmogus" : n < 10 ? "žmonės" : "žmonių"}`;
 }
 
 /** Trumpa antraštė darbų sąrašams, pvz. „Žolės pjovimas · apie 40 a“. */
-export function requestHeadline(category: string, details: unknown): string {
-  const label = categoryLabel(category);
+export function requestHeadline(category: string, details: unknown, locale: Locale = DEFAULT_LOCALE): string {
+  const label = categoryLabel(category, locale);
   const d = (details ?? {}) as Record<string, unknown>;
+  const o = OPTION_TEXT[locale];
   switch (category) {
     case "mowing":
     case "yard":
-      return typeof d.areaAres === "number" ? `${label} · ${formatAres(d.areaAres)}` : label;
+      return typeof d.areaAres === "number" ? `${label} · ${formatAres(d.areaAres, locale)}` : label;
     case "pruning": {
-      const target = PRUNING_TARGETS[d.target as PruningTarget];
+      const target = o.pruning[d.target as PruningTarget];
       const amount = typeof d.amount === "string" && d.amount.trim() ? d.amount.trim() : null;
       if (amount) return `${label} · ${amount}`;
       return target ? `${label} · ${target.toLowerCase()}` : label;
     }
     case "helper": {
-      const people = typeof d.peopleCount === "number" ? d.peopleCount : 1;
-      const hours = typeof d.durationHours === "number" ? `, ~${String(d.durationHours).replace(".", ",")} val.` : "";
-      return `${label} · ${people} ${people === 1 ? "žmogus" : people < 10 ? "žmonės" : "žmonių"}${hours}`;
+      const n = typeof d.peopleCount === "number" ? d.peopleCount : 1;
+      const hours =
+        typeof d.durationHours === "number" ? (locale === "en" ? `, ~${num(d.durationHours, locale)} h` : `, ~${num(d.durationHours, locale)} val.`) : "";
+      return `${label} · ${people(n, locale)}${hours}`;
     }
     default:
       return label;
@@ -138,39 +189,53 @@ export function requestHeadline(category: string, details: unknown): string {
 }
 
 /** Apimties eilutės, rodomos užklausos ir užsakymo kortelėse. */
-export function describeDetails(category: string, details: unknown): string[] {
+export function describeDetails(category: string, details: unknown, locale: Locale = DEFAULT_LOCALE): string[] {
   const d = (details ?? {}) as Record<string, unknown>;
+  const o = OPTION_TEXT[locale];
+  const en = locale === "en";
   const lines: string[] = [];
   switch (category) {
     case "mowing": {
-      lines.push(typeof d.areaAres === "number" ? `Plotas: ${formatAres(d.areaAres)}` : "Plotas: tiksliai nežinomas");
-      if (d.grassHeight) lines.push(`Žolė: ${GRASS_HEIGHTS[d.grassHeight as GrassHeight]?.toLowerCase() ?? ""}`);
-      lines.push(d.collectGrass ? "Žolę reikia surinkti" : "Žolės surinkti nereikia");
-      if (d.equipment) lines.push(EQUIPMENT[d.equipment as Equipment] ?? "");
-      if (d.tractorAccess) lines.push("Traktoriukas gali įvažiuoti");
+      lines.push(
+        typeof d.areaAres === "number"
+          ? `${en ? "Area" : "Plotas"}: ${formatAres(d.areaAres, locale)}`
+          : en
+            ? "Area: not known exactly"
+            : "Plotas: tiksliai nežinomas",
+      );
+      const h = o.grass[d.grassHeight as GrassHeight];
+      if (h) lines.push(`${en ? "Grass" : "Žolė"}: ${h.toLowerCase()}`);
+      lines.push(d.collectGrass ? (en ? "Grass must be collected" : "Žolę reikia surinkti") : en ? "No need to collect grass" : "Žolės surinkti nereikia");
+      const eq = o.equipment[d.equipment as Equipment];
+      if (eq) lines.push(eq);
+      if (d.tractorAccess) lines.push(en ? "A small tractor can drive in" : "Traktoriukas gali įvažiuoti");
       break;
     }
     case "yard": {
-      const tasks = Array.isArray(d.tasks) ? (d.tasks as YardTask[]).map((t) => YARD_TASKS[t]).filter(Boolean) : [];
+      const tasks = Array.isArray(d.tasks) ? (d.tasks as YardTask[]).map((t) => o.yardTasks[t]).filter(Boolean) : [];
       if (tasks.length) lines.push(tasks.join(", "));
-      if (typeof d.areaAres === "number") lines.push(`Plotas: ${formatAres(d.areaAres)}`);
-      lines.push(d.haulAway ? "Reikia išvežti atliekas" : "Išvežti nereikia");
+      if (typeof d.areaAres === "number") lines.push(`${en ? "Area" : "Plotas"}: ${formatAres(d.areaAres, locale)}`);
+      lines.push(d.haulAway ? (en ? "Waste must be taken away" : "Reikia išvežti atliekas") : en ? "No need to take waste away" : "Išvežti nereikia");
       break;
     }
     case "pruning": {
-      const target = PRUNING_TARGETS[d.target as PruningTarget];
-      if (target) lines.push(`Ką genėti: ${target.toLowerCase()}`);
-      if (typeof d.amount === "string" && d.amount.trim()) lines.push(`Kiekis: ${d.amount.trim()}`);
-      lines.push(d.haulAway ? "Reikia išvežti šakas" : "Šakų išvežti nereikia");
+      const target = o.pruning[d.target as PruningTarget];
+      if (target) lines.push(`${en ? "What to prune" : "Ką genėti"}: ${target.toLowerCase()}`);
+      if (typeof d.amount === "string" && d.amount.trim()) lines.push(`${en ? "Amount" : "Kiekis"}: ${d.amount.trim()}`);
+      lines.push(d.haulAway ? (en ? "Branches must be taken away" : "Reikia išvežti šakas") : en ? "No need to take branches away" : "Šakų išvežti nereikia");
       break;
     }
     case "helper": {
-      const people = typeof d.peopleCount === "number" ? d.peopleCount : 1;
-      lines.push(`Reikia žmonių: ${people}`);
+      const n = typeof d.peopleCount === "number" ? d.peopleCount : 1;
+      lines.push(`${en ? "People needed" : "Reikia žmonių"}: ${n}`);
       lines.push(
         typeof d.durationHours === "number"
-          ? `Trukmė: apie ${String(d.durationHours).replace(".", ",")} val.`
-          : "Trukmė: tiksliai nežinoma",
+          ? en
+            ? `Duration: about ${num(d.durationHours, locale)} h`
+            : `Trukmė: apie ${num(d.durationHours, locale)} val.`
+          : en
+            ? "Duration: not known exactly"
+            : "Trukmė: tiksliai nežinoma",
       );
       break;
     }

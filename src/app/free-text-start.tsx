@@ -3,9 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ArrowRight } from "lucide-react";
+import { useI18n } from "@/i18n/client";
 
 /** Pradėti nuo laisvo teksto: „Reikia nupjauti pievą prie sodybos…“ */
 export function FreeTextStart() {
+  const { t } = useI18n();
   const router = useRouter();
   const [text, setText] = useState("");
   return (
@@ -18,20 +20,20 @@ export function FreeTextStart() {
       }}
     >
       <label htmlFor="free-text" className="sr-only">
-        Arba aprašykite savais žodžiais
+        {t.home.freeTextLabel}
       </label>
       <input
         id="free-text"
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder="Arba parašykite savais žodžiais…"
+        placeholder={t.home.freeTextPlaceholder}
         className="h-12 min-w-0 flex-1 rounded-xl border-0 bg-white/95 px-4 text-[16px] text-ink placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-sun-400"
       />
       <button
         type="submit"
         className="inline-flex h-12 shrink-0 items-center gap-1.5 rounded-xl bg-sun-400 px-4 font-bold text-ink hover:bg-sun-200"
       >
-        <span className="hidden sm:inline">Tęsti</span>
+        <span className="hidden sm:inline">{t.home.continue}</span>
         <ArrowRight className="size-5" aria-hidden />
       </button>
     </form>

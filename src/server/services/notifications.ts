@@ -5,12 +5,14 @@ import { notifications, users } from "@/server/db/schema";
 import type { Actor } from "@/server/auth/session";
 import { notFound } from "@/server/errors";
 import type { NotificationDTO } from "@/shared/types";
+import { renderNotification, type NotificationParams } from "@/shared/notification-text";
+import { DEFAULT_LOCALE, isLocale, type Locale } from "@/shared/locale";
 
 export interface NewNotification {
   userId: string;
   type: string;
-  title: string;
-  body?: string;
+  /** Duomenys tekstui sudaryti gavėjo kalba (žr. shared/notification-text.ts). */
+  params: NotificationParams;
   link: string;
   /** Tas pats raktas = tas pats įvykis; pakartojus antras pranešimas nesukuriamas. */
   dedupeKey: string;
@@ -25,8 +27,9 @@ export async function notify(tx: Tx, items: NewNotification[]): Promise<void> {
       items.map((n) => ({
         userId: n.userId,
         type: n.type,
-        title: n.title,
-        body: n.body ?? "",
+        // Lietuviškas tekstas saugomas atsargai (senesniems klientams); rodant sudaromas gavėjo kalba.
+        ...renderNotification(n.type, n.params, "lt"),
+        params: n.params as Record<string, unknown>,
         link: n.link,
         dedupeKey: n.dedupeKey,
         emailWanted: n.email ?? false,
@@ -35,26 +38,29 @@ export async function notify(tx: Tx, items: NewNotification[]): Promise<void> {
     .onConflictDoNothing({ target: notifications.dedupeKey });
 }
 
-function toDTO(n: typeof notifications.$inferSelect): NotificationDTO {
+function localized(n: typeof notifications.$inferSelect, locale: Locale): { title: string; body: string } {
+  return n.params ? renderNotification(n.type, n.params as NotificationParams, locale) : { title: n.title, body: n.body };
+}
+
+function toDTO(n: typeof notifications.$inferSelect, locale: Locale): NotificationDTO {
   return {
     id: n.id,
     type: n.type,
-    title: n.title,
-    body: n.body,
+    ...localized(n, locale),
     link: n.link,
     read: n.readAt !== null,
     createdAt: n.createdAt.toISOString(),
   };
 }
 
-export async function listNotifications(actor: Actor, limit = 50): Promise<NotificationDTO[]> {
+export async function listNotifications(actor: Actor, locale: Locale = DEFAULT_LOCALE, limit = 50): Promise<NotificationDTO[]> {
   const rows = await db
     .select()
     .from(notifications)
     .where(eq(notifications.userId, actor.id))
     .orderBy(desc(notifications.createdAt))
     .limit(Math.min(limit, 200));
-  return rows.map(toDTO);
+  return rows.map((n) => toDTO(n, locale));
 }
 
 export async function unreadCount(actor: Actor): Promise<number> {
@@ -133,15 +139,20 @@ export async function dispatchEmails(): Promise<void> {
     .where(and(inArray(notifications.id, pending.map((p) => p.id)), isNull(notifications.emailSentAt)))
     .returning();
   for (const n of claimed) {
-    const [u] = await db.select({ email: users.email, name: users.name, isDemo: users.isDemo }).from(users).where(eq(users.id, n.userId));
+    const [u] = await db
+      .select({ email: users.email, name: users.name, isDemo: users.isDemo, locale: users.locale })
+      .from(users)
+      .where(eq(users.id, n.userId));
     if (!u || u.isDemo) continue;
     const url = `${appUrl}${n.link}`;
+    const locale: Locale = isLocale(u.locale) ? u.locale : DEFAULT_LOCALE;
+    const text = localized(n, locale);
     try {
       await t.sendMail({
         from: process.env.MAIL_FROM ?? "Kviki <info@kviki.lt>",
         to: u.email,
-        subject: n.title,
-        text: `${n.title}\n\n${n.body ? n.body + "\n\n" : ""}Atidaryti: ${url}\n\n– Kviki`,
+        subject: text.title,
+        text: `${text.title}\n\n${text.body ? text.body + "\n\n" : ""}${locale === "en" ? "Open" : "Atidaryti"}: ${url}\n\n– Kviki`,
       });
     } catch (err) {
       console.error("Nepavyko išsiųsti laiško", n.id, err);

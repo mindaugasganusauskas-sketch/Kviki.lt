@@ -13,8 +13,12 @@ import { PrivateLocation, RequestSummary } from "@/components/request-summary";
 import { RequestStatusBadge } from "@/components/status";
 import { Alert, ButtonLink, EmptyState, PageHeader, SectionTitle } from "@/components/ui";
 import type { RequestView } from "@/shared/types";
+import { requestHeadline } from "@/shared/categories";
+import { getI18n } from "@/i18n/server";
 
-export const metadata: Metadata = { title: "Užklausa" };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getI18n()).t.titles.request };
+}
 
 export default async function RequestPage(props: PageProps<"/uzklausos/[id]">) {
   const { id } = await props.params;
@@ -29,6 +33,7 @@ export default async function RequestPage(props: PageProps<"/uzklausos/[id]">) {
   }
   if (view.viewer === "provider") redirect(`/darbai-salia/${id}`);
   await markReadByLink(actor, `/uzklausos/${id}`);
+  const { locale, t } = await getI18n();
 
   const activeOffers = view.offers.filter((o) => o.status === "active");
   const providerCancelled = view.lastAgreement?.cancelledBy === "provider";
@@ -37,38 +42,38 @@ export default async function RequestPage(props: PageProps<"/uzklausos/[id]">) {
     <div className="space-y-6">
       {view.status === "open" && <AutoRefresh seconds={15} />}
       <PageHeader
-        back={{ href: "/mano-uzklausos", label: "Mano užklausos" }}
-        title={view.headline}
+        back={{ href: "/mano-uzklausos", label: t.request.backToMine }}
+        title={requestHeadline(view.category, view.details, locale)}
         subtitle={<RequestStatusBadge status={view.status} offerCount={activeOffers.length} />}
       />
 
       {sp.paskelbta === "1" && view.status === "open" && (
-        <Alert tone="success" title="Užklausa paskelbta">
-          Teikėjai jūsų savivaldybėje ją jau mato. Galite užverti puslapį – apie naujus pasiūlymus pranešime pranešimų skiltyje ir el. paštu.
+        <Alert tone="success" title={t.request.publishedTitle}>
+          {t.request.publishedText}
         </Alert>
       )}
       {sp.atnaujinta === "1" && (
-        <Alert tone="success" title="Pakeitimai išsaugoti">
-          {activeOffers.length > 0 ? "Teikėjai gavo pranešimą ir turės patvirtinti savo kainas iš naujo." : "Teikėjai matys atnaujintą užklausą."}
+        <Alert tone="success" title={t.request.updatedTitle}>
+          {activeOffers.length > 0 ? t.request.updatedWithOffers : t.request.updatedNoOffers}
         </Alert>
       )}
 
       {view.status === "open" && (
         <section>
-          <SectionTitle>Pasiūlymai</SectionTitle>
+          <SectionTitle>{t.request.offersTitle}</SectionTitle>
           {activeOffers.length === 0 ? (
             <EmptyState
               icon={<Hourglass className="size-6" />}
-              title="Kol kas pasiūlymų nėra"
+              title={t.request.noOffersTitle}
               action={
                 <>
                   <ButtonLink href={`/uzklausos/${id}/redaguoti`} variant="outline">
-                    <Pencil className="size-4" aria-hidden /> Keisti laiką ar apimtį
+                    <Pencil className="size-4" aria-hidden /> {t.request.editTimeScope}
                   </ButtonLink>
                 </>
               }
             >
-              Kai teikėjas pasiūlys kainą ir laiką, jis atsiras čia. Puslapis atsinaujina pats.
+              {t.request.noOffersText}
             </EmptyState>
           ) : (
             <OffersCompare requestId={id} offers={activeOffers} />
@@ -79,52 +84,51 @@ export default async function RequestPage(props: PageProps<"/uzklausos/[id]">) {
       {view.status === "agreed" && view.activeAgreementId && (
         <Alert
           tone="success"
-          title="Dėl darbo sutarta"
-          action={<ButtonLink href={`/susitarimai/${view.activeAgreementId}`}>Atidaryti užsakymo kortelę</ButtonLink>}
+          title={t.request.agreedTitle}
+          action={<ButtonLink href={`/susitarimai/${view.activeAgreementId}`}>{t.request.openAgreement}</ButtonLink>}
         >
-          Pasirinktas teikėjas mato jūsų adresą ir kontaktą.
+          {t.request.agreedText}
         </Alert>
       )}
 
       {view.status === "completed" && view.activeAgreementId && (
-        <Alert tone="success" title="Darbas užbaigtas" action={<ButtonLink href={`/susitarimai/${view.activeAgreementId}`} variant="outline">Užsakymo kortelė</ButtonLink>} />
+        <Alert tone="success" title={t.request.completedTitle} action={<ButtonLink href={`/susitarimai/${view.activeAgreementId}`} variant="outline">{t.request.agreementCard}</ButtonLink>} />
       )}
 
       {view.status === "on_hold" && (
         <Alert
           tone="warning"
-          title={providerCancelled ? "Teikėjas atšaukė užsakymą" : "Užsakymas atšauktas"}
+          title={providerCancelled ? t.request.providerCancelledTitle : t.request.cancelledAgreementTitle}
           action={
             <>
-              <ActionButton endpoint={`/api/v1/requests/${id}/reopen`} label="Ieškoti kito teikėjo" />
-              <ActionButton endpoint={`/api/v1/requests/${id}/cancel`} label="Atšaukti užklausą" variant="outline" confirm="Užklausa bus uždaryta. Tęsti?" />
+              <ActionButton endpoint={`/api/v1/requests/${id}/reopen`} label={t.request.findAnother} />
+              <ActionButton endpoint={`/api/v1/requests/${id}/cancel`} label={t.request.cancelRequest} variant="outline" confirm={t.request.cancelRequestConfirm} />
               {view.lastAgreement && (
                 <Link href={`/susitarimai/${view.lastAgreement.id}`} className="self-center text-sm font-semibold underline">
-                  Ankstesnis užsakymas
+                  {t.request.previousAgreement}
                 </Link>
               )}
             </>
           }
         >
-          Naują teikėją pasirenkate jūs. Ankstesni kitų teikėjų pasiūlymai vėl atsiras, kai jie patvirtins savo kainą.
+          {t.request.onHoldText}
         </Alert>
       )}
 
-      {view.status === "cancelled" && <Alert tone="info" title="Užklausa atšaukta">Teikėjai jos nebemato.</Alert>}
+      {view.status === "cancelled" && <Alert tone="info" title={t.request.cancelledTitle}>{t.request.cancelledText}</Alert>}
 
       {view.status === "expired" && (
         <Alert
           tone="warning"
-          title="Užklausa nebegalioja"
+          title={t.request.expiredTitle}
           action={
             <>
-              <ButtonLink href={`/uzklausos/${id}/redaguoti`}>Atnaujinti su nauju laiku</ButtonLink>
-              <ActionButton endpoint={`/api/v1/requests/${id}/cancel`} label="Uždaryti" variant="outline" />
+              <ButtonLink href={`/uzklausos/${id}/redaguoti`}>{t.request.renew}</ButtonLink>
+              <ActionButton endpoint={`/api/v1/requests/${id}/cancel`} label={t.request.close} variant="outline" />
             </>
           }
         >
-          Nurodytas laikas praėjo arba ilgai nebuvo susitarta, todėl teikėjai jos nebemato. Jei darbo vis dar reikia, nurodykite
-          naują laiką – užklausa vėl bus paskelbta.
+          {t.request.expiredText}
         </Alert>
       )}
 
@@ -133,15 +137,15 @@ export default async function RequestPage(props: PageProps<"/uzklausos/[id]">) {
           action={
             view.status === "open" && (
               <Link href={`/uzklausos/${id}/redaguoti`} className="inline-flex items-center gap-1 text-sm font-semibold text-brand-700 hover:underline">
-                <Pencil className="size-4" aria-hidden /> Redaguoti
+                <Pencil className="size-4" aria-hidden /> {t.common.edit}
               </Link>
             )
           }
         >
-          Jūsų užklausa
+          {t.request.yourRequest}
         </SectionTitle>
         <RequestSummary request={view}>
-          <PrivateLocation data={view.private} note="Matote jūs ir pasirinktas teikėjas" />
+          <PrivateLocation data={view.private} note={t.request.privateOwner} />
         </RequestSummary>
       </section>
 
@@ -149,9 +153,9 @@ export default async function RequestPage(props: PageProps<"/uzklausos/[id]">) {
         <div className="flex justify-end">
           <ActionButton
             endpoint={`/api/v1/requests/${id}/cancel`}
-            label="Atšaukti užklausą"
+            label={t.request.cancelRequest}
             variant="danger"
-            confirm="Teikėjai nebematys šios užklausos, o jų pasiūlymai bus uždaryti."
+            confirm={t.request.cancelOpenConfirm}
           />
         </div>
       )}

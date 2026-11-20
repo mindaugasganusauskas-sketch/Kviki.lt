@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
 import { CircleAlert, CircleCheck, Info, LoaderCircle, TriangleAlert } from "lucide-react";
+import { OptionalLabel } from "./i18n-text";
 
 export function cx(...parts: (string | false | null | undefined)[]): string {
   return parts.filter(Boolean).join(" ");
@@ -201,7 +202,7 @@ export function Field({
     <div className="space-y-1.5">
       <label htmlFor={htmlFor} className="block text-sm font-semibold">
         {label}
-        {optional && <span className="ml-1 font-normal text-muted">(nebūtina)</span>}
+        {optional && <OptionalLabel />}
       </label>
       {children}
       {hint && !error && <p className="text-xs leading-relaxed text-muted">{hint}</p>}
@@ -225,8 +226,14 @@ export function Select(props: ComponentProps<"select">) {
   return <select {...props} className={cx(inputClass, "h-11 pr-8", props.className)} />;
 }
 
-export function Spinner({ className }: { className?: string }) {
-  return <LoaderCircle className={cx("size-5 animate-spin text-brand-600", className)} aria-label="Kraunama" />;
+export function Spinner({ className, label }: { className?: string; label?: string }) {
+  return (
+    <LoaderCircle
+      className={cx("size-5 animate-spin text-brand-600", className)}
+      aria-label={label}
+      aria-hidden={label ? undefined : true}
+    />
+  );
 }
 
 export function SectionTitle({ children, action }: { children: ReactNode; action?: ReactNode }) {

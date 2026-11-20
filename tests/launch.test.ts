@@ -188,3 +188,51 @@ describe("Saugumo pataisymai", () => {
     expect((await fetch(BASE + "/og.png")).status).toBe(200);
   });
 });
+
+describe("Anglų kalba", () => {
+  it("klaidos ir pranešimai grąžinami naudotojo kalba", async () => {
+    const d = new Device("en-klaida");
+    d.lang = "en";
+    const r = await d.post("/api/v1/auth/register", { name: "John", email: `en-${uid()}@test.kviki.lt`, password: "trumpas" });
+    expect(r.status).toBe(400);
+    expect(r.body.error.message).toBe("The password must be at least 8 characters");
+    const lt = await new Device("lt-klaida").post("/api/v1/auth/register", { name: "Jonas", email: `lt-${uid()}@test.kviki.lt`, password: "trumpas" });
+    expect(lt.body.error.message).toBe("Slaptažodis turi būti bent 8 simbolių");
+  });
+
+  it("kalbos perjungimas nustato slapuką ir išsaugo kalbą paskyroje", async () => {
+    const client = await newUser("en-klientas");
+    const res = await fetch(BASE + "/api/v1/locale", {
+      method: "POST",
+      headers: { Origin: BASE, "Content-Type": "application/json", Cookie: client.cookie },
+      body: JSON.stringify({ locale: "en" }),
+    });
+    expect(res.status).toBe(200);
+    expect(res.headers.getSetCookie().join(";")).toContain("kviki_lang=en");
+    const { rows } = await pool.query("select locale from users where email = $1", [client.email]);
+    expect(rows[0].locale).toBe("en");
+  });
+
+  it("pranešimas rodomas skaitytojo kalba", async () => {
+    const client = await newUser("en-pranesimai");
+    const p = await newProvider(`enp-${uid()}`, { businessForm: "individual", categories: ["mowing"], municipalities: ["silales-r"] });
+    const id = (await client.post("/api/v1/requests", requestBody({ municipality: "silales-r" }))).body.id;
+    await p.post(`/api/v1/requests/${id}/offers`, offerBody(80, 5));
+    client.lang = "en";
+    const en = (await client.get("/api/v1/notifications")).body.notifications.find((n: any) => n.type === "new_offer");
+    expect(en.title).toBe("New offer: €80");
+    expect(en.body).toContain("Grass mowing · about 40 ares");
+    client.lang = "lt";
+    const lt = (await client.get("/api/v1/notifications")).body.notifications.find((n: any) => n.type === "new_offer");
+    expect(lt.title.replace(/\s/g, " ")).toBe("Naujas pasiūlymas: 80 €");
+  });
+
+  it("puslapiai rodomi angliškai su slapuku kviki_lang=en", async () => {
+    const html = await (await fetch(BASE + "/", { headers: { Cookie: "kviki_lang=en" } })).text();
+    expect(html).toContain('lang="en"');
+    expect(html).toContain("What do you need");
+    expect(html).toContain("Grass mowing");
+    const terms = await (await fetch(BASE + "/taisykles", { headers: { Cookie: "kviki_lang=en" } })).text();
+    expect(terms).toContain("Terms of use");
+  });
+});
