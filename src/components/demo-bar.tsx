@@ -34,11 +34,12 @@ export function useDemoLogin() {
 export function DemoBar({ name }: { name: string }) {
   const { login, pending, error } = useDemoLogin();
   return (
-    <div className="bg-violet-700 text-white">
+    <div className="bg-ink text-white">
       <div className="mx-auto max-w-5xl px-4 py-2 text-xs sm:text-sm">
-        <p>
-          <span className="font-semibold">Demonstracija</span> · {name}
-          <span className="hidden sm:inline"> · Visi duomenys išgalvoti ir matomi tik demonstracijoje.</span>
+        <p className="flex flex-wrap items-center gap-x-2">
+          <span className="rounded-full bg-sun-400 px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wider text-ink">Demo</span>
+          <span className="font-semibold">{name}</span>
+          <span className="hidden text-white/70 sm:inline">· Visi duomenys išgalvoti ir matomi tik demonstracijoje.</span>
         </p>
         <div className="-mx-4 mt-1.5 flex gap-1.5 overflow-x-auto px-4 pb-0.5">
           {(Object.keys(LABELS) as DemoAs[]).map((k) => (
@@ -47,7 +48,7 @@ export function DemoBar({ name }: { name: string }) {
               type="button"
               disabled={pending}
               onClick={() => login(k)}
-              className="shrink-0 rounded-full bg-white/15 px-2.5 py-1 font-medium hover:bg-white/25 disabled:opacity-50"
+              className="shrink-0 rounded-full bg-white/10 px-2.5 py-1 font-medium hover:bg-white/20 disabled:opacity-50"
             >
               {LABELS[k]}
             </button>
@@ -56,7 +57,7 @@ export function DemoBar({ name }: { name: string }) {
             type="button"
             disabled={pending}
             onClick={() => login("client", true)}
-            className="shrink-0 rounded-full border border-white/40 px-2.5 py-1 font-medium hover:bg-white/10 disabled:opacity-50"
+            className="shrink-0 rounded-full border border-white/30 px-2.5 py-1 font-medium hover:bg-white/10 disabled:opacity-50"
           >
             Atkurti pradžią
           </button>

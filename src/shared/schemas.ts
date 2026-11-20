@@ -60,6 +60,11 @@ export const updateAccountSchema = z.object({
   phone: z.union([phoneSchema, z.literal("").transform(() => null), z.null()]),
 });
 
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, { error: "Įrašykite dabartinį slaptažodį" }).max(200),
+  newPassword: z.string().min(8, { error: "Naujas slaptažodis turi būti bent 8 simbolių" }).max(200),
+});
+
 export const modeSchema = z.object({ mode: z.enum(["client", "provider"]) });
 
 export const providerProfileSchema = z.object({

@@ -8,7 +8,7 @@ import { categoryLabel } from "@/shared/categories";
 import { formatPriceLabel, formatRelativePast } from "@/shared/format";
 import { municipalityLabel } from "@/shared/municipalities";
 import { AutoRefresh } from "@/components/auto-refresh";
-import { CategoryIcon } from "@/components/category-icon";
+import { CategoryBadge } from "@/components/category-icon";
 import { ProviderGate } from "@/components/provider-gate";
 import { WhenLine } from "@/components/request-summary";
 import { Badge, DemoBadge, EmptyState, PageHeader } from "@/components/ui";
@@ -62,14 +62,12 @@ export default async function NearbyPage() {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={j.photos[0].url} alt="" className="size-20 shrink-0 rounded-xl object-cover sm:size-24" loading="lazy" />
                 ) : (
-                  <span className="flex size-20 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700 sm:size-24">
-                    <CategoryIcon category={j.category} className="size-8" />
-                  </span>
+                  <span className="flex size-20 shrink-0 items-center justify-center sm:size-24"><CategoryBadge category={j.category} size="lg" /></span>
                 )}
                 <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-center gap-2">
                     <span className="font-bold">{j.headline}</span>
-                    {j.recurrence.frequency && <Badge tone="purple">Periodinis</Badge>}
+                    {j.recurrence.frequency && <Badge tone="blue">Periodinis</Badge>}
                     {j.isDemo && <DemoBadge />}
                   </span>
                   <span className="mt-1 flex flex-col gap-0.5 text-sm text-stone-700">

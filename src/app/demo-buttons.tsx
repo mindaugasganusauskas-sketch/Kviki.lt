@@ -8,7 +8,7 @@ export function DemoButtons() {
   return (
     <div className="mt-4">
       <div className="flex flex-wrap gap-2">
-        <Button type="button" onClick={() => login("client")} loading={pending} className="bg-violet-700 hover:bg-violet-800">
+        <Button type="button" variant="accent" onClick={() => login("client")} loading={pending}>
           Išbandyti kaip klientas
         </Button>
         <Button type="button" variant="outline" onClick={() => login("tomas")} disabled={pending}>

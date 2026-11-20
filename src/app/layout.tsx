@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
+import "@fontsource-variable/plus-jakarta-sans";
 import "./globals.css";
 import { getActor } from "@/server/auth/session";
 import { unreadCount } from "@/server/services/notifications";
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#386e2c",
+  themeColor: "#0e7036",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",

@@ -53,7 +53,7 @@ export function NotificationList({ items }: { items: NotificationDTO[] }) {
               onClick={() => open(n)}
               className={cx("flex w-full gap-3 px-4 py-3.5 text-left hover:bg-paper", !n.read && "bg-brand-50/50")}
             >
-              <span className={cx("mt-1.5 size-2.5 shrink-0 rounded-full", n.read ? "bg-transparent" : "bg-sun-400")} aria-hidden />
+              <span className={cx("mt-1.5 size-2.5 shrink-0 rounded-full", n.read ? "bg-transparent" : "bg-berry-500")} aria-hidden />
               <span className="min-w-0 flex-1">
                 <span className={cx("block", n.read ? "font-medium" : "font-bold")}>{n.title}</span>
                 {n.body && <span className="mt-0.5 block text-sm text-muted">{n.body}</span>}

@@ -2,10 +2,11 @@ import { eq } from "drizzle-orm";
 import { db } from "@/server/db";
 import { providerAreas, providerCategories, providerProfiles, users } from "@/server/db/schema";
 import { hashPassword, verifyPassword } from "@/server/auth/password";
-import type { Actor } from "@/server/auth/session";
+import { deleteOtherSessions, type Actor } from "@/server/auth/session";
 import { allow } from "@/server/auth/rate-limit";
 import { AppError, parseInput } from "@/server/errors";
 import {
+  changePasswordSchema,
   loginSchema,
   modeSchema,
   providerProfileSchema,
@@ -51,9 +52,15 @@ export async function register(input: unknown, ip: string): Promise<{ userId: st
   }
 }
 
+let dummy: Promise<string> | null = null;
+function dummyHash(): Promise<string> {
+  dummy ??= hashPassword("kviki-netikras-slaptazodis");
+  return dummy;
+}
+
 export async function login(input: unknown, ip: string): Promise<{ userId: string }> {
   const data = parseInput(loginSchema, input);
-  if (!allow(`login:${ip}:${data.email}`, 10, 15 * 60 * 1000)) {
+  if (!allow(`login:${ip}:${data.email}`, 10, 15 * 60 * 1000) || !allow(`login-email:${data.email}`, 30, 60 * 60 * 1000)) {
     throw new AppError("RATE_LIMITED", "Per daug bandymų. Palaukite 15 minučių.");
   }
   const [row] = await db
@@ -61,9 +68,26 @@ export async function login(input: unknown, ip: string): Promise<{ userId: strin
     .from(users)
     .where(eq(users.email, data.email))
     .limit(1);
-  const ok = row ? await verifyPassword(data.password, row.passwordHash) : false;
+  // Neegzistuojančiam el. paštui tikriname „netikrą“ slaptažodį, kad atsakymo laikas neišduotų, ar paskyra yra.
+  const ok = await verifyPassword(data.password, row?.passwordHash ?? (await dummyHash()));
+
   if (!row || !ok) throw new AppError("UNAUTHENTICATED", "Neteisingas el. paštas arba slaptažodis");
   return { userId: row.id };
+}
+
+/** Pakeičia slaptažodį ir atjungia visus kitus įrenginius. */
+export async function changePassword(actor: Actor, input: unknown, currentToken: string | null): Promise<void> {
+  if (actor.isDemo) throw new AppError("FORBIDDEN", "Demonstracinės paskyros slaptažodžio keisti negalima");
+  const data = parseInput(changePasswordSchema, input);
+  if (!allow(`password:${actor.id}`, 10, 60 * 60 * 1000)) {
+    throw new AppError("RATE_LIMITED", "Per daug bandymų. Pabandykite vėliau.");
+  }
+  const [row] = await db.select({ passwordHash: users.passwordHash }).from(users).where(eq(users.id, actor.id));
+  if (!row || !(await verifyPassword(data.currentPassword, row.passwordHash))) {
+    throw new AppError("VALIDATION", "Neteisingas dabartinis slaptažodis");
+  }
+  await db.update(users).set({ passwordHash: await hashPassword(data.newPassword) }).where(eq(users.id, actor.id));
+  await deleteOtherSessions(actor.id, currentToken);
 }
 
 export async function updateAccount(actor: Actor, input: unknown) {

@@ -135,7 +135,7 @@ export function ProviderProfileForm({
                   <button
                     type="button"
                     onClick={() => setAreas(areas.filter((a) => a !== code))}
-                    className="inline-flex h-8 items-center gap-1 rounded-full bg-brand-600 px-3 text-xs font-semibold text-white"
+                    className="inline-flex h-8 items-center gap-1 rounded-full bg-brand-700 px-3 text-xs font-semibold text-white"
                   >
                     {municipalityLabel(code)} <X className="size-3.5" aria-label="pašalinti" />
                   </button>

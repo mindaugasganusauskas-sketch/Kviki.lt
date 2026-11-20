@@ -8,7 +8,7 @@ import { municipalityLabel } from "@/shared/municipalities";
 import { ModeSwitch } from "@/components/nav";
 import { ButtonLink, Card, DefinitionRow, PageHeader } from "@/components/ui";
 import Link from "next/link";
-import { AccountForm, DeleteAccount, LogoutButton } from "./account-form";
+import { AccountForm, ChangePassword, DeleteAccount, LogoutButton } from "./account-form";
 
 export const metadata: Metadata = { title: "Paskyra" };
 
@@ -22,6 +22,13 @@ export default async function AccountPage() {
         <h2 className="mb-4 text-lg font-bold">Jūsų duomenys</h2>
         <AccountForm name={actor.name} phone={actor.phone ?? ""} />
       </Card>
+
+      {!actor.isDemo && (
+        <Card>
+          <h2 className="mb-4 text-lg font-bold">Slaptažodis</h2>
+          <ChangePassword />
+        </Card>
+      )}
 
       <Card>
         <div className="flex flex-wrap items-start justify-between gap-3">

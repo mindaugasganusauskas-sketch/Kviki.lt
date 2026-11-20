@@ -1,7 +1,7 @@
 import { Clock, Lock, MapPin, Navigation, Phone, Repeat } from "lucide-react";
 import type { RequestPrivateDTO, RequestPublicDTO } from "@/shared/types";
 import { formatDateKey, formatTiming, frequencyLabel } from "@/shared/format";
-import { CategoryIcon } from "./category-icon";
+import { CategoryBadge } from "./category-icon";
 import { Card, DemoBadge } from "./ui";
 
 export function mapsLink(p: RequestPrivateDTO): string {
@@ -55,9 +55,7 @@ export function RequestSummary({ request, children }: { request: RequestPublicDT
   return (
     <Card>
       <div className="flex items-start gap-3">
-        <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
-          <CategoryIcon category={request.category} className="size-6" />
-        </span>
+        <CategoryBadge category={request.category} />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-lg font-bold leading-snug">{request.headline}</h2>

@@ -6,11 +6,12 @@ export function cx(...parts: (string | false | null | undefined)[]): string {
   return parts.filter(Boolean).join(" ");
 }
 
-type Variant = "primary" | "secondary" | "ghost" | "danger" | "outline";
+type Variant = "primary" | "accent" | "secondary" | "ghost" | "danger" | "outline";
 type Size = "sm" | "md" | "lg";
 
 const variants: Record<Variant, string> = {
-  primary: "bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800 shadow-sm",
+  primary: "bg-brand-700 text-white hover:bg-brand-800 active:bg-brand-900 shadow-sm shadow-brand-900/10",
+  accent: "bg-sun-400 text-ink hover:bg-sun-300 active:bg-sun-500 shadow-sm shadow-sun-600/20",
   secondary: "bg-brand-50 text-brand-800 hover:bg-brand-100 border border-brand-200",
   outline: "bg-white text-ink border border-line hover:bg-paper",
   ghost: "text-brand-700 hover:bg-brand-50",
@@ -64,20 +65,22 @@ export function ButtonLink({
 
 export function Card({ className, children, ...rest }: ComponentProps<"div">) {
   return (
-    <div {...rest} className={cx("rounded-2xl border border-line bg-white p-4 sm:p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03)]", className)}>
+    <div
+      {...rest}
+      className={cx("rounded-2xl border border-line/80 bg-white p-4 shadow-[0_1px_2px_rgba(11,31,18,0.04),0_8px_24px_-12px_rgba(11,31,18,0.10)] sm:p-5", className)}
+    >
       {children}
     </div>
   );
 }
 
-type Tone = "neutral" | "green" | "amber" | "red" | "blue" | "purple";
+type Tone = "neutral" | "green" | "amber" | "red" | "blue";
 const tones: Record<Tone, string> = {
   neutral: "bg-stone-100 text-stone-700",
   green: "bg-brand-100 text-brand-800",
   amber: "bg-sun-100 text-sun-700",
   red: "bg-red-100 text-red-800",
   blue: "bg-sky-100 text-sky-800",
-  purple: "bg-violet-100 text-violet-800",
 };
 
 export function Badge({ tone = "neutral", className, children }: { tone?: Tone; className?: string; children: ReactNode }) {
@@ -90,9 +93,9 @@ export function Badge({ tone = "neutral", className, children }: { tone?: Tone; 
 
 export function DemoBadge() {
   return (
-    <Badge tone="purple" className="uppercase tracking-wide">
+    <span className="inline-flex items-center rounded-full bg-ink px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wider text-sun-300">
       Demo
-    </Badge>
+    </span>
   );
 }
 

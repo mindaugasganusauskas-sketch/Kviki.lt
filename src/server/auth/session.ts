@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
-import { and, eq, gt, lt } from "drizzle-orm";
+import { and, eq, gt, lt, ne } from "drizzle-orm";
 import { cookies, headers } from "next/headers";
 import { cache } from "react";
 import { db } from "@/server/db";
@@ -31,6 +31,13 @@ export async function createSession(userId: string): Promise<{ token: string; ex
   // Kartais išvalome pasibaigusias sesijas.
   if (Math.random() < 0.05) await db.delete(sessions).where(lt(sessions.expiresAt, new Date()));
   return { token, expiresAt };
+}
+
+/** Atjungia visus naudotojo įrenginius, išskyrus dabartinį. */
+export async function deleteOtherSessions(userId: string, keepToken: string | null): Promise<void> {
+  await db
+    .delete(sessions)
+    .where(keepToken ? and(eq(sessions.userId, userId), ne(sessions.tokenHash, hashToken(keepToken))) : eq(sessions.userId, userId));
 }
 
 export async function deleteSession(token: string): Promise<void> {

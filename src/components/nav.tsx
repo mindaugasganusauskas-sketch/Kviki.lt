@@ -94,7 +94,7 @@ export function TopNav({ state, unread }: { state: "guest" | Mode; unread: numbe
             className={cx(
               "relative inline-flex h-10 items-center gap-2 rounded-xl px-3 text-sm font-semibold transition-colors",
               it.primary
-                ? "bg-brand-600 text-white hover:bg-brand-700"
+                ? "bg-sun-400 text-ink shadow-sm hover:bg-sun-300"
                 : active
                   ? "bg-brand-50 text-brand-800"
                   : "text-stone-700 hover:bg-stone-100",
@@ -103,7 +103,7 @@ export function TopNav({ state, unread }: { state: "guest" | Mode; unread: numbe
             <it.icon className="size-4" aria-hidden />
             {it.label}
             {it.badge && count > 0 && (
-              <span className="ml-0.5 rounded-full bg-sun-400 px-1.5 text-xs font-bold text-ink" aria-label={`${count} neperskaityti`}>
+              <span className="ml-0.5 rounded-full bg-berry-500 px-1.5 text-xs font-bold text-white" aria-label={`${count} neperskaityti`}>
                 {count}
               </span>
             )}
@@ -136,7 +136,7 @@ export function BottomNav({ state, unread }: { state: "guest" | Mode; unread: nu
                 )}
               >
                 {it.primary ? (
-                  <span className="-mt-5 flex size-12 items-center justify-center rounded-full bg-brand-600 text-white shadow-lg ring-4 ring-white">
+                  <span className="-mt-5 flex size-13 items-center justify-center rounded-full bg-sun-400 text-ink shadow-lg shadow-sun-600/30 ring-4 ring-white">
                     <it.icon className="size-6" aria-hidden />
                   </span>
                 ) : (
@@ -146,7 +146,7 @@ export function BottomNav({ state, unread }: { state: "guest" | Mode; unread: nu
                 )}
                 <span className="leading-tight">{it.label}</span>
                 {it.badge && count > 0 && (
-                  <span className="absolute right-[22%] top-1 min-w-4 rounded-full bg-sun-400 px-1 text-center text-[10px] font-bold text-ink">
+                  <span className="absolute right-[22%] top-1 min-w-4 rounded-full bg-berry-500 px-1 text-center text-[10px] font-bold text-white">
                     {count}
                   </span>
                 )}

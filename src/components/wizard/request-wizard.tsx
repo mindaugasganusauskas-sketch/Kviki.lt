@@ -20,7 +20,7 @@ import { MUNICIPALITIES, municipalityLabel } from "@/shared/municipalities";
 import { FREQUENCIES, vilniusDateKey, vilniusToDate, type Frequency } from "@/shared/time";
 import type { PhotoDTO, UserDTO } from "@/shared/types";
 import { AuthForm } from "../auth-form";
-import { CategoryIcon } from "../category-icon";
+import { CategoryBadge, CategoryIcon } from "../category-icon";
 import { Alert, Button, Card, Field, Input, Select, Textarea, cx } from "../ui";
 import { LocationButton } from "./location-button";
 import { PhotoPicker } from "./photo-picker";
@@ -606,7 +606,7 @@ export function RequestWizard(props: WizardProps) {
                             onClick={() => update({ window: q.value })}
                             className={cx(
                               "h-9 rounded-full border px-3.5 text-sm font-semibold",
-                              active ? "border-brand-500 bg-brand-600 text-white" : "border-line bg-white hover:bg-paper",
+                              active ? "border-brand-700 bg-brand-700 text-white" : "border-line bg-white hover:bg-paper",
                             )}
                           >
                             {q.label}
@@ -668,9 +668,7 @@ export function RequestWizard(props: WizardProps) {
           <Card>
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-start gap-3">
-                <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
-                  <CategoryIcon category={payload.category} className="size-6" />
-                </span>
+                <CategoryBadge category={payload.category} />
                 <div>
                   <p className="text-lg font-bold">{requestHeadline(payload.category, payload.details)}</p>
                   <ul className="mt-2 flex flex-wrap gap-1.5">

@@ -116,3 +116,41 @@ export function DeleteAccount() {
     </form>
   );
 }
+
+/** Slaptažodžio keitimas. Kiti įrenginiai po pakeitimo atjungiami. */
+export function ChangePassword() {
+  const [current, setCurrent] = useState("");
+  const [next, setNext] = useState("");
+  const [state, setState] = useState<{ pending: boolean; error: string | null; saved: boolean }>({ pending: false, error: null, saved: false });
+  return (
+    <form
+      className="space-y-4"
+      onSubmit={async (e) => {
+        e.preventDefault();
+        setState({ pending: true, error: null, saved: false });
+        try {
+          await api("/api/v1/me/password", { json: { currentPassword: current, newPassword: next } });
+          setCurrent("");
+          setNext("");
+          setState({ pending: false, error: null, saved: true });
+        } catch (err) {
+          setState({ pending: false, error: (err as Error).message, saved: false });
+        }
+      }}
+    >
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Dabartinis slaptažodis" htmlFor="pw-current">
+          <Input id="pw-current" type="password" autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} />
+        </Field>
+        <Field label="Naujas slaptažodis" htmlFor="pw-new" hint="Bent 8 simboliai">
+          <Input id="pw-new" type="password" autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} />
+        </Field>
+      </div>
+      {state.error && <Alert tone="error">{state.error}</Alert>}
+      {state.saved && <Alert tone="success">Slaptažodis pakeistas. Kituose įrenginiuose reikės prisijungti iš naujo.</Alert>}
+      <Button type="submit" variant="outline" loading={state.pending} disabled={!current || next.length < 8}>
+        Keisti slaptažodį
+      </Button>
+    </form>
+  );
+}

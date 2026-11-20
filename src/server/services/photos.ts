@@ -44,7 +44,8 @@ export async function processPhotos(files: File[]): Promise<ProcessedPhoto[]> {
     if (file.type && !file.type.startsWith("image/")) throw new AppError("VALIDATION", "Galima įkelti tik nuotraukas");
     try {
       const input = Buffer.from(await file.arrayBuffer());
-      const { data, info } = await sharp(input, { failOn: "error" })
+      // Ribojame pikselių skaičių, kad viena „nuotrauka“ neužimtų visos serverio atminties.
+      const { data, info } = await sharp(input, { failOn: "error", limitInputPixels: 50_000_000 })
         .rotate()
         .resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true })
         .jpeg({ quality: 80, mozjpeg: true })
