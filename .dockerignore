@@ -2,6 +2,8 @@ node_modules
 .next
 .git
 uploads
+.deploy-status
+.auto-update-failed
 test-results
 playwright-report
 screenshots

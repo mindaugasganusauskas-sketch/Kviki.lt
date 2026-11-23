@@ -32,8 +32,11 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
       MAIL_FROM: ${MAIL_FROM:-Kviki <info@kviki.lt>}
+      DEPLOY_STATUS_DIR: /deploy-status
     volumes:
       - uploads:/data/uploads
+      # Automatinio atnaujinimo būsena (scripts/auto-update.sh) – rodoma adresu /api/status.
+      - ./.deploy-status:/deploy-status:ro
 
   caddy:
     image: caddy:2-alpine

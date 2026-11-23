@@ -5,6 +5,7 @@
 .env.local
 .next/
 /.auto-update-failed
+/.deploy-status/
 /backups/
 /playwright-report/
 /screenshots/

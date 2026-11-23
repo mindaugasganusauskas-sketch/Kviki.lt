@@ -147,7 +147,7 @@ Pakanka vieno VPS. Svetainė, duomenų bazė ir nuotraukos veikia tame pačiame 
    ```
    Pirmą kartą surinkimas trunka kelias minutes. Duomenų bazės lentelės sukuriamos automatiškai. Atidarykite `https://kviki.lt`.
 
-6. **Atnaujinimai vyksta automatiškai.** `install-vps.sh` įdiegia `cron` užduotį: kas 5 minutes serveris patikrina GitHub. Radęs naujų pakeitimų stebimoje šakoje, jis juos parsisiunčia ir perkrauna svetainę, o duomenų bazės pakeitimai pritaikomi patys. Jei naujos versijos surinkti nepavyksta, toliau veikia ankstesnė versija, o tas pats bandymas nekartojamas. Žurnalas: `/var/log/kviki-update.log`. Rankinis atnaujinimas, jei prireiktų: `cd /opt/kviki && ./scripts/auto-update.sh`.
+6. **Atnaujinimai vyksta automatiškai.** `install-vps.sh` įdiegia `cron` užduotį: kas 5 minutes serveris patikrina GitHub. Radęs naujų pakeitimų stebimoje šakoje, jis juos parsisiunčia ir perkrauna svetainę, o duomenų bazės pakeitimai pritaikomi patys. Jei naujos versijos surinkti nepavyksta, toliau veikia ankstesnė versija, o bandoma vėl po valandos. Ar atnaujinimas pavyko, matyti be terminalo adresu `https://kviki.lt/api/status` (veikianti versija, paskutinio bandymo būsena ir klaidos priežastis). Žurnalas serveryje: `/var/log/kviki-update.log`. Rankinis atnaujinimas, jei prireiktų: `cd /opt/kviki && ./scripts/auto-update.sh`.
 
 7. **Atsarginės kopijos** (duomenų bazė ir nuotraukos, laikomos 14 paskutinių) taip pat įjungiamos automatiškai, kasnakt 3:15. Jos laikomos kataloge `/opt/kviki/backups/`. Rekomenduojama periodiškai jas nusikopijuoti ir už serverio ribų.
    Atkūrimas: `docker compose exec -T db pg_restore -U kviki -d kviki --clean < backups/kviki-DATA.dump`.
